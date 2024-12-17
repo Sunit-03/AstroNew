@@ -48,17 +48,17 @@ const Form8 = () => {
         </Form.Item>
 
         {/* Submit Button */}
-        <Form.Item>
-            <Button type="default" htmlType="reset">
-              Reset
-            </Button>
-            <Button type="primary" htmlType="submit">
-              Submit
-            </Button>
-            <Button type="dashed" htmlType="button">
-              Save Draft
-            </Button>
-        </Form.Item>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <Button type="default" htmlType="reset">
+            Reset
+          </Button>
+          <Button type="primary" htmlType="submit">
+            Submit
+          </Button>
+          <Button type="dashed" htmlType="button">
+            Save Draft
+          </Button>
+        </div>
       </Form>
     </div>
   );
