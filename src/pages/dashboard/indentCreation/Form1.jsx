@@ -346,7 +346,7 @@ const Form1 = () => {
 
   return (
     <div className="form-container">
-      <h2>Indent Creation Form</h2>
+      <h2>Indent Creation</h2>
       <Form
         form={form}
         layout="vertical"

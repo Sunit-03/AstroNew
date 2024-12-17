@@ -97,7 +97,7 @@ const Form3 = () => {
   const [form] = Form.useForm();
   return (
     <div className="form-container">
-      <h2>Indent Modification Form</h2>
+      <h2>Indent Modification</h2>
       <Form form={form} layout="vertical">
         <div className="form-section">
           <Form.Item

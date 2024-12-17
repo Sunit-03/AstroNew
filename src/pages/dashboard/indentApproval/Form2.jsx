@@ -9,7 +9,7 @@ const Form2 = () => {
   const [form] = Form.useForm();
   return (
     <div className="form-container">
-      <h2>Indent Approval Form</h2>
+      <h2>Indent Approval</h2>
       <Form form={form} layout="vertical" initialValues={{ date: null }}>
         <div className="form-section">
           <Form.Item

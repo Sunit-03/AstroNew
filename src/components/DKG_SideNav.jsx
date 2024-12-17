@@ -3,54 +3,29 @@ import Sider from "antd/es/layout/Sider";
 import React, { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  BookOutlined,
-  ForkOutlined,
-  RadarChartOutlined,
-  BarChartOutlined,
-  FilePdfOutlined,
-  BuildOutlined,
-  BranchesOutlined,
-  CompassOutlined,
-  DeploymentUnitOutlined,
-  BarsOutlined,
-  ToolOutlined,
-  FundOutlined,
-  DatabaseOutlined,
-  AuditOutlined,
-  ExperimentOutlined,
-  ControlOutlined,
   CheckOutlined,
   FileDoneOutlined,
-  EyeOutlined,
-  FileSearchOutlined,
-  FlagOutlined,
-  SendOutlined,
-  MessageOutlined,
-  BankOutlined,
-  InfoCircleOutlined,
-  FireOutlined,
-  HomeOutlined,
   LogoutOutlined,
   FileTextOutlined,
-  RobotOutlined,
-  LineChartOutlined,
-  ProfileOutlined,
   UserOutlined,
-  HourglassOutlined,
-  AppstoreAddOutlined,
-  IdcardOutlined,
-  WarningOutlined
+  FileAddOutlined,
+  EditOutlined,
+  FileExclamationOutlined,
+  MoneyCollectOutlined,
+  SafetyCertificateOutlined,
+  CodeSandboxOutlined
 } from "@ant-design/icons";
 import IconBtn from "./DKG_IconBtn";
 import { useDispatch } from "react-redux";
 import { logout } from "../store/slice/authSlice";
 import { ActiveTabContext } from "../context/dashboardActiveTabContext";
+import { icons } from "antd/es/image/PreviewGroup";
 
 const items = [
   {
     key: "1",
-    icon: <FileTextOutlined />,
-    label: "Indent Creation Form",
+    icon: <FileAddOutlined />,
+    label: "Indent Creation",
     activeTab: 1,
     path: "/",
   },
@@ -486,39 +461,67 @@ const items = [
 //   },
   {
     key: "2",
-    icon: <FileTextOutlined />,
-    label: "Indent Approval Form",
+    icon: <FileDoneOutlined />,
+    label: "Indent Approval",
     activeTab: 2,
     path: "/",
   },
   {
     key: "3",
-    icon: <FileTextOutlined />,
-    label: "Indent Modification Form",
+    icon: <EditOutlined />,
+    label: "Indent Modification",
     activeTab: 3,
     path: "/",
   },
   {
     key: "4",
-    icon: <FileTextOutlined />,
-    label: "Tender Request Form",
+    icon: <FileExclamationOutlined />,
+    label: "Tender Request",
     activeTab: 4,
     path: "/",
   },
   {
     key: "5",
     icon: <FileTextOutlined />,
-    label: "Tender Evaluation Input Form",
+    label: "Tender Evaluation Input",
     activeTab: 5,
     path: "/",
   },
-//   {
-//     key: "7",
-//     icon: <UserOutlined />,
-//     label: "Admin",
-//     activeTab: 7,
-//     path: "/",
-//   },
+  {
+    key: "6",
+    icon: <UserOutlined />,
+    label: "Committee Formation",
+    activeTab: 6,
+    path: "/",
+  },
+  {
+    key: "7",
+    icon: <MoneyCollectOutlined />,
+    label: "Purchase Order (PO)",
+    activeTab: 7,
+    path: "/",
+  },
+  {
+    key: "8",
+    icon: <CheckOutlined />,
+    label: "Approval Workflow",
+    activeTab: 8,
+    path: "/",
+  },
+  {
+    key: "9",
+    icon: <SafetyCertificateOutlined />,
+    label: "Performance & Warranty Security",
+    activeTab: 9,
+    path: "/",
+  },
+  {
+    key: "10",
+    icon: <CodeSandboxOutlined />,
+    label: "Delivery Tracking",
+    activeTab: 10,
+    path: "/",
+  },
 ];
 
 const SideNav = ({ collapsed, toggleCollapse }) => {

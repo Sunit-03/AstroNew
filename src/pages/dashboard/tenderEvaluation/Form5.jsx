@@ -20,16 +20,18 @@ const Form5 = () => {
   };
   return (
     <div className="form-container">
-      <h2>Tender Evaluation Input Form</h2>
+      <h2>Tender Evaluation</h2>
       <Form onFinish={onFinish} layout="vertical">
         <div className="form-section">
-          <Form.Item
-            name="tenderId"
-            label="Tender ID"
-            rules={[{ required: true, message: "Please enter the tender ID" }]}
-          >
-            <Input />
-          </Form.Item>
+            <div>      
+            <Form.Item
+                name="tenderId"
+                label="Tender ID"
+                rules={[{ required: true, message: "Please enter the tender ID" }]}
+            >
+                <Input />
+            </Form.Item>
+            </div>
           <Form.Item
             name="modeOfProcurement"
             label="Mode of Procurement"

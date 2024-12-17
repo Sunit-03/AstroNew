@@ -46,8 +46,10 @@ const Login = () => {
         <img src={MyLogo} width={200} height={150} />
         <FormBody onFinish={handleFormSubmit} initialValues={formData}>
           <FormInputItem label="Employee ID" placeholder="123456" name='userId' onChange={handleFormValueChange} required />
-          <FormInputItem label="Password" placeholder="*****" name='password' onChange={handleFormValueChange} required />
-          <Btn htmlType="submit" text="submit"/>
+          <FormInputItem type='password' label="Password" placeholder="*****" name='password' onChange={handleFormValueChange} required />
+          <div className='login-submit-btn'>
+              <Btn htmlType="submit" text="submit"/>
+          </div>
         </FormBody>
 
         <h2 className='text-gray-500'>Account credentials unavailable ? <br /> Request Admin for your credentials.</h2>

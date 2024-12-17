@@ -56,7 +56,7 @@ import RollingPrivateRoute from "./RollingPrivateRoute";
 import RollingControlSample from "../dashboard/duty/stage/rollingStage/rollingControl60E1/RollingControlSample";
 import RollingVerification from "../dashboard/duty/stage/rollingVerification/RollingVerification";
 import FinishingVerification from "../dashboard/duty/stage/finishingVerification/FinishingVerification";
-import SmsRecord from "../dashboard/records/SmsRecord";
+// import SmsRecord from "../dashboard/records/SmsRecord";
 
 const RoutesComponent = () => {
   return (
@@ -65,7 +65,7 @@ const RoutesComponent = () => {
         <Route element={<PrivateRoutes />}>
           <Route path="/" element={<LayoutWithDashboard />}>
             <Route index element={<Dashboard />} />
-            <Route path="/record/sms" element={<SmsRecord />} />
+            {/* <Route path="/record/sms" element={<SmsRecord />} /> */}
 
             <Route path="/sms">
               <Route index element={<SmsDutyStartForm />} />
