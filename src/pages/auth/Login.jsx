@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Btn from '../../components/DKG_Btn'
-import {ReactComponent as Logo} from '../../assets/images/logo.svg'
+// import {ReactComponent as Logo} from '../../assets/images/logo.svg'
+import MyLogo from "../../assets/images/iia-logo.png";
 import FormBody from '../../components/DKG_FormBody'
 import FormInputItem from '../../components/DKG_FormInputItem'
 import { useDispatch } from 'react-redux';
@@ -42,7 +43,7 @@ const Login = () => {
       </header>
     <FormContainer className='mt-20 main-content border-none !shadow-none'>
       <main className='w-full p-4 flex flex-col h-fit justify-center items-center gap-8 bg-white relative z-20 rounded-md'>
-        <Logo width={300} height={200} />
+        <img src={MyLogo} width={200} height={150} />
         <FormBody onFinish={handleFormSubmit} initialValues={formData}>
           <FormInputItem label="Employee ID" placeholder="123456" name='userId' onChange={handleFormValueChange} required />
           <FormInputItem label="Password" placeholder="*****" name='password' onChange={handleFormValueChange} required />
