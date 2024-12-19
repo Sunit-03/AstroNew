@@ -522,6 +522,41 @@ const items = [
     activeTab: 10,
     path: "/",
   },
+  {
+    key: "11",
+    icon: <CodeSandboxOutlined />,
+    label: "GPRM",
+    activeTab: 11,
+    path: "/",
+  },
+  {
+    key: "12",
+    icon: <CodeSandboxOutlined />,
+    label: "Goods Inspection",
+    activeTab: 12,
+    path: "/",
+  },
+  {
+    key: "13",
+    icon: <CodeSandboxOutlined />,
+    label: "Goods Return",
+    activeTab: 13,
+    path: "/",
+  },
+  {
+    key: "14",
+    icon: <CodeSandboxOutlined />,
+    label: "Goods Receipt and Inspection",
+    activeTab: 14,
+    path: "/",
+  },
+  {
+    key: "15",
+    icon: <CodeSandboxOutlined />,
+    label: "Asset Master",
+    activeTab: 15,
+    path: "/",
+  },
 ];
 
 const SideNav = ({ collapsed, toggleCollapse }) => {
