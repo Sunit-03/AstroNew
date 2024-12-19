@@ -13,7 +13,12 @@ import {
   FileExclamationOutlined,
   MoneyCollectOutlined,
   SafetyCertificateOutlined,
-  CodeSandboxOutlined
+  CodeSandboxOutlined,
+  GoldOutlined,
+  CheckSquareOutlined,
+  RollbackOutlined,
+  ReconciliationOutlined,
+  ApartmentOutlined
 } from "@ant-design/icons";
 import IconBtn from "./DKG_IconBtn";
 import { useDispatch } from "react-redux";
@@ -524,35 +529,35 @@ const items = [
   },
   {
     key: "11",
-    icon: <CodeSandboxOutlined />,
+    icon: <GoldOutlined />,
     label: "GPRM",
     activeTab: 11,
     path: "/",
   },
   {
     key: "12",
-    icon: <CodeSandboxOutlined />,
+    icon: <CheckSquareOutlined />,
     label: "Goods Inspection",
     activeTab: 12,
     path: "/",
   },
   {
     key: "13",
-    icon: <CodeSandboxOutlined />,
+    icon: <RollbackOutlined />,
     label: "Goods Return",
     activeTab: 13,
     path: "/",
   },
   {
     key: "14",
-    icon: <CodeSandboxOutlined />,
+    icon: <ReconciliationOutlined />,
     label: "Goods Receipt and Inspection",
     activeTab: 14,
     path: "/",
   },
   {
     key: "15",
-    icon: <CodeSandboxOutlined />,
+    icon: <ApartmentOutlined />,
     label: "Asset Master",
     activeTab: 15,
     path: "/",
