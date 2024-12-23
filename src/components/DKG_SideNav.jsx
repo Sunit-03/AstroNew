@@ -20,6 +20,11 @@ import {
   ReconciliationOutlined,
   ApartmentOutlined
 } from "@ant-design/icons";
+import { MdOutlineAddBox } from "react-icons/md";
+import { BiTransferAlt } from "react-icons/bi";
+import { TiFolderDelete } from "react-icons/ti";
+import { CiPassport1 } from "react-icons/ci";
+import { GoIssueReopened } from "react-icons/go";
 import IconBtn from "./DKG_IconBtn";
 import { useDispatch } from "react-redux";
 import { logout } from "../store/slice/authSlice";
@@ -560,6 +565,41 @@ const items = [
     icon: <ApartmentOutlined />,
     label: "Asset Master",
     activeTab: 15,
+    path: "/",
+  },
+  {
+    key: "16",
+    icon: <MdOutlineAddBox />,
+    label: "Goods Issue",
+    activeTab: 16,
+    path: "/",
+  },
+  {
+    key: "17",
+    icon: <BiTransferAlt />,
+    label: "Goods Transfer",
+    activeTab: 17,
+    path: "/",
+  },
+  {
+    key: "18",
+    icon: <TiFolderDelete />,
+    label: "Material Disposal",
+    activeTab: 18,
+    path: "/",
+  },
+  {
+    key: "19",
+    icon: <CiPassport1 />,
+    label: "Gate Pass",
+    activeTab: 19,
+    path: "/",
+  },
+  {
+    key: "20",
+    icon: <GoIssueReopened />,
+    label: "Demand and Issue",
+    activeTab: 20,
     path: "/",
   },
 ];

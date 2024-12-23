@@ -24,6 +24,11 @@ import Form12 from './goodsInspection/Form12';
 import Form13 from './goodsReturn/Form13';
 import Form14 from './goodsReceiptInspection/Form14';
 import Form15 from './assterMaster/Form15';
+import Form16 from './goodsIssue/Form16';
+import Form17 from './goodsTransfer/Form17';
+import Form18 from './materialDisposal/Form18';
+import Form19 from './gatePass/Form19';
+import Form20 from './demandAndIssue/Form20';
 
 const { Search } = Input;
 
@@ -120,6 +125,16 @@ const Dashboard = () => {
             return <Form14 />
         case 15:
             return <Form15 />
+        case 16:
+            return <Form16 />
+        case 17:
+            return <Form17 />
+        case 18:
+            return <Form18 />
+        case 19:
+            return <Form19 />
+        case 20:
+            return <Form20 />
         default:
           break
       }

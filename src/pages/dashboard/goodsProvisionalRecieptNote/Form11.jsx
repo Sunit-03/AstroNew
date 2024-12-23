@@ -62,6 +62,31 @@ const Form11 = () => {
                 <InputNumber style={{ width: "100%" }} placeholder="Enter Contact Number" />
             </Form.Item>
         </div>
+        <div className="form-section">
+        <Form.Item label="Field Station" name="fieldStation" rules={[{ required: true }]}> 
+                <Input placeholder="Enter Field Station" />
+            </Form.Item>
+            <Form.Item label="Indentor Name" name="indentorName" rules={[{ required: true }]}> 
+                <Input placeholder="Enter Indentor Name" />
+            </Form.Item>
+            <Form.Item label="Expected Date of Supply" name="expectedDate" rules={[{ required: true }]}> 
+                    <DatePicker style={{ width: "100%" }} />
+                </Form.Item>
+        </div>
+        <div className="form-section">
+        <Form.Item label="Consignee Details" name="consigneeDetails" rules={[{ required: true }]}> 
+                <Input placeholder="Enter Consignee Details" />
+            </Form.Item>
+            <Form.Item label="Warranty Years" name="warrantyYears"> 
+                <InputNumber style={{ width: "100%" }} placeholder="Enter Contact Number" />
+            </Form.Item>
+            <Form.Item label="Project" name="project"> 
+                <Input placeholder="Enter Project Associated" />
+            </Form.Item>
+        </div>
+        <Form.Item label="Received By" name="receivedBy" rules={[{ required: true }]} style={{ width: "32%" }}> 
+                <Input />
+            </Form.Item>
 
         <h2>Material Details</h2>
         <div className="form-section">
@@ -100,12 +125,29 @@ const Form11 = () => {
             <Form.Item label="Net Price (Rs)" name="netPrice"> 
                 <InputNumber readOnly style={{ width: "100%" }} placeholder="Auto-calculated" />
             </Form.Item>
+            <Form.Item label="Make No." name="makeNo"> 
+                <Input placeholder="Manufacturer code or batch no." />
+            </Form.Item>
+            <Form.Item label="Model No." name="modelNo"> 
+                <Input placeholder="Enter Model No." />
+            </Form.Item>
+        </div>
+        <div className="form-section">
+        <Form.Item label="Serial No." name="serialNo"> 
+                <Input placeholder="Enter Serial No." />
+            </Form.Item>
+            <Form.Item label="Warranty" name="warranty"> 
+                <Input.TextArea rows={1} placeholder="Enter Warranty terms" />
+            </Form.Item>
+            <Form.Item label="Notes" name="notes"> 
+                <Input.TextArea rows={1} placeholder="Additional remarks" />
+            </Form.Item>
+        </div>
             <Form.Item label="Attach Photograph" name="photograph"> 
                 <Upload listType="picture" beforeUpload={() => false}>
                 <Button icon={<UploadOutlined />}>Upload</Button>
                 </Upload>
             </Form.Item>
-        </div>
 
 
         <Form.Item>
