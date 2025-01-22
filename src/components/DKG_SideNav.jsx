@@ -18,7 +18,8 @@ import {
   CheckSquareOutlined,
   RollbackOutlined,
   ReconciliationOutlined,
-  ApartmentOutlined
+  ApartmentOutlined,
+  OrderedListOutlined
 } from "@ant-design/icons";
 import { MdOutlineAddBox } from "react-icons/md";
 import { BiTransferAlt } from "react-icons/bi";
@@ -512,6 +513,20 @@ const items = [
     path: "/",
   },
   {
+    key: "7a",
+    icon: <MoneyCollectOutlined />,
+    label: "Service Order",
+    activeTab: 21,
+    path: "/",
+  },
+  {
+    key: "7b",
+    icon: <MoneyCollectOutlined />,
+    label: "Contingency Purchase",
+    activeTab: 22,
+    path: "/",
+  },
+  {
     key: "8",
     icon: <CheckOutlined />,
     label: "Approval Workflow",
@@ -535,7 +550,7 @@ const items = [
   {
     key: "11",
     icon: <GoldOutlined />,
-    label: "GPRM",
+    label: "GPRN",
     activeTab: 11,
     path: "/",
   },

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { Input } from 'antd';
-import {HomeOutlined, IdcardOutlined, FileTextOutlined, RobotOutlined, LineChartOutlined, ProfileOutlined, UserOutlined} from '@ant-design/icons';
+// import {HomeOutlined, IdcardOutlined, FileTextOutlined, RobotOutlined, LineChartOutlined, ProfileOutlined, UserOutlined} from '@ant-design/icons';
 // import Home from './home/Form1';
 // import Duty from './duty/Form2';
 // import Records from './records/Form3';
@@ -29,6 +29,9 @@ import Form17 from './goodsTransfer/Form17';
 import Form18 from './materialDisposal/Form18';
 import Form19 from './gatePass/Form19';
 import Form20 from './demandAndIssue/Form20';
+import Form7a from './serviceOrder/Form7a';
+import Form7b from './contingencyPurchase/Form7b';
+// import Form21 from './lineItems/Form21';
 
 const { Search } = Input;
 
@@ -135,6 +138,10 @@ const Dashboard = () => {
             return <Form19 />
         case 20:
             return <Form20 />
+        case 21:
+            return <Form7a />
+        case 22:
+            return <Form7b />
         default:
           break
       }

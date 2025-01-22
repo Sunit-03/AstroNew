@@ -18,14 +18,17 @@ import {
 import { Option } from "antd/es/mentions";
 import React, { useEffect, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
+import dayjs from "dayjs";
+// import isValid from 'dayjs/plugin/isValid';
 
-const Form7 = () => {
+const Form7a = () => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = React.useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:5001/purchaseOrder");
+        const response = await fetch("http://localhost:5001/serviceOrder");
         const data = await response.json();
 
         // Populate the form with fetched data
@@ -33,46 +36,50 @@ const Form7 = () => {
           console.log("Fetched data:", data.responseData);
           const formattedData = {
             tenderID: data.responseData.tenderId,
-            indentID: data.responseData.indentId,
+            // indentID: data.responseData.indentId,
             consigneeAddress: data.responseData.consignesAddress,
             billingAddress: data.responseData.billingAddress,
-            deliveryPeriod: data.responseData.deliveryPeriod,
-            warranty: data.responseData.warranty,
+            deliveryPeriod: data.responseData.jobCompletionPeriod,
+            // warranty: data.responseData.warranty,
             ifLDClauseApplicable: data.responseData.ifLdClauseApplicable,
             incoTerms: data.responseData.incoterms,
             paymentTerms: data.responseData.paymentterms,
             vendorName: data.responseData.vendorName,
             vendorAddress: data.responseData.vendorAddress,
             applicablePBG: data.responseData.applicablePbgToBeSubmitted,
-            transporterDetails:
-              data.responseData.transposterAndFreightForWarderDetails,
+            // transporterDetails:
+            //   data.responseData.transposterAndFreightForWarderDetails,
             vendorAccountNo: data.responseData.vendorAccountNumber,
+            vendorIFSCCode: data.responseData.vendeorsZRSCCode,
             vendorAccountName: data.responseData.vendorAccountName,
-            lineItems: data.responseData.purchaseOrderAttributes.map(
+            // createdDate: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSSSSS"),
+            // updatedDate: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSSSSS"),
+
+            lineItems: data.responseData.materials.map(
               (item) => ({
                 materialCode: item.materialCode,
                 materialDescription: item.materialDescription,
                 quantity: item.quantity,
                 unitRate: item.rate,
-                currency: item.currency,
                 exchangeRate: item.exchangeRate,
+                currency: item.currency,
                 gst: item.gst,
                 duties: item.duties,
-                freightCharges: item.freightCharge,
+                budgetCode: item.budgetCode,
               })
             ),
           };
           form.setFieldsValue(formattedData);
-          message.success("PO Data loaded successfully");
+          message.success("SO Data loaded successfully");
         }
       } catch (error) {
-        message.error("Failed to fetch PO data");
+        message.error("Failed to fetch SO data");
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
   }, [form]);
-  const submitPOData = async (values) => {
+  const submitSOData = async (values) => {
     setLoading(true);
     try {
       const updatedLineItems = values.lineItems.map((item) => ({
@@ -88,18 +95,18 @@ const Form7 = () => {
         },
         responseData: {
           tenderID: values.tenderID,
-          indentID: values.indentID,
+        //   indentID: values.indentID,
           consigneeAddress: values.consigneeAddress,
           billingAddress: values.billingAddress,
           deliveryPeriod: values.deliveryPeriod,
-          warranty: values.warranty,
+        //   warranty: values.warranty,
           ifLDClauseApplicable: values.ifLDClauseApplicable,
           incoTerms: values.incoTerms,
           paymentTerms: values.paymentTerms,
           vendorName: values.vendorName,
           vendorAddress: values.vendorAddress,
           applicablePBG: values.applicablePbgToBeSubmitted,
-          transporterDetails: values.transporterDetails,
+        //   transporterDetails: values.transporterDetails,
           vendorAccountNo: values.vendorAccountNo,
           vendorIFSCCode: values.vendorIFSCCode,
           vendorAccountName: values.vendorAccountName,
@@ -107,12 +114,12 @@ const Form7 = () => {
             materialCode: item.materialCode,
             materialDescription: item.materialDescription,
             quantity: parseFloat(item.quantity),
-            unitRate: parseFloat(item.unitRate),
-            currency: item.currency,
+            unitRate: parseFloat(item.rate),
             exchangeRate: item.exchangeRate,
+            currency: item.currency,
             gst: item.gst,
             duties: item.duties,
-            freightCharges: item.freightCharge,
+            budgetCode: item.budgetCode,
           })),
           createdBy: "admin",
           updatedBy: "admin",
@@ -129,24 +136,150 @@ const Form7 = () => {
       if (!response.ok) throw new Error("Failed to submit form");
 
       const result = await response.json();
-      message.success("Tender submitted successfully");
+      message.success("SO submitted successfully");
       console.log("Submit response:", result);
     } catch (error) {
-      message.error("failed to submit PO form");
-      console.error("Error submitting PO:", error);
+      message.error("failed to submit SO form");
+      console.error("Error submitting SO:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = (values) => {
-    submitPOData(values);
+    submitSOData(values);
   };
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await fetch("http://localhost:5001/serviceOrder"); // Replace with actual endpoint
+  //       const data = await response.json();
+
+  //       // Populate the form with fetched data
+  //       if (data.responseData) {
+  //         console.log("Fetched data:", data.responseData);
+  //         const formattedData = {
+  //           id: data.responseData.id,
+  //           tenderId: data.responseData.tenderId,
+  //           consignesAddress: data.responseData.consignesAddress,
+  //           billingAddress: data.responseData.billingAddress,
+  //           jobCompletionPeriod: data.responseData.jobCompletionPeriod,
+  //           ifLDClauseApplicable: data.responseData.ifLdClauseApplicable,
+  //           incoTerms: data.responseData.incoTerms,
+  //           paymentTerms: data.responseData.paymentTerms,
+  //           vendorName: data.responseData.vendorName,
+  //           vendorAddress: data.responseData.vendorAddress,
+  //           applicablePBG: data.responseData.applicablePBGToBeSubmitted,
+  //           vendorAccountNo: data.responseData.vendorAccountNumber,
+  //           vendeorsIFSCCode: data.responseData.vendeorsZRSCCode,
+  //           vendorAccountName: data.responseData.vendorAccountName,
+  //           createdDate: data.responseData.createdDate
+  //             ? [new dayjs(data.responseData.createdDate)]
+  //             : undefined,
+  //           updatedDate: data.responseData.updatedDate
+  //             ? [new dayjs(data.responseData.updatedDate)]
+  //             : undefined,
+  //           lineItems: data.responseData.materialDetails.map((item) => ({
+  //             materialCode: item.materialCode,
+  //             materialDescription: item.materialDescription,
+  //             quantity: item.quantity,
+  //             rate: item.rate,
+  //             exchangeRate: item.exchangeRate,
+  //             currency: item.currency,
+  //             gst: item.gst,
+  //             duties: item.duties,
+  //             budgetCode: item.budgetCode,
+  //           })),
+  //         };
+  //         form.setFieldsValue(formattedData);
+  //         setMaterialsData(formattedData.lineItems); // Update materialsData state
+  //         message.success("SO Data loaded successfully");
+  //       }
+  //     } catch (error) {
+  //       message.error("Failed to fetch SO data");
+  //       console.error("Error fetching data:", error);
+  //     }
+  //   };
+
+  //   const submitSOData = async (values) => {
+  //     setLoading(true);
+  //     try {
+  //       const updatedLineItems = values.lineItems.map((item) => ({
+  //         ...item,
+  //         totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+  //       }));
+  //       const formattedValues = {
+  //         responseData: {
+  //           id: values.id,
+  //           tenderId: values.tenderId,
+  //           consigneeAddress: values.consigneeAddress,
+  //           billingAddress: values.billingAddress,
+  //           jobCompletionPeriod: values.jobCompletionPeriod,
+  //           //   warranty: values.warranty,
+  //           ifLDClauseApplicable: values.ifLDClauseApplicable,
+  //           incoTerms: values.incoTerms,
+  //           paymentTerms: values.paymentTerms,
+  //           vendorName: values.vendorName,
+  //           vendorAddress: values.vendorAddress,
+  //           applicablePBG: values.applicablePbgToBeSubmitted,
+  //           //   transporterDetails: values.transporterDetails,
+  //           vendorAccountNo: values.vendorAccountNo,
+  //           vendeorsIFSCCode: values.vendeorsIFSCCode,
+  //           vendorAccountName: values.vendorAccountName,
+  //           //   createdDate:values.createdDate?.[0]?.format('YYYY-MM-DD'),
+  //           //   updatedDate:values.updatedDate?.[0]?.format('YYYY-MM-DD'),
+  //           createdDate: values.responseData.createdDate
+  //             ? dayjs(values.responseData.createdDate)
+  //             : undefined,
+  //           updatedDate: values.responseData.updatedDate
+  //             ? dayjs(values.responseData.updatedDate)
+  //             : undefined,
+  //           materialDetails: updatedLineItems.map((item) => ({
+  //             materialCode: item.materialCode,
+  //             materialDescription: item.materialDescription,
+  //             quantity: parseFloat(item.quantity),
+  //             rate: parseFloat(item.rate),
+  //             exchangeRate: item.exchangeRate,
+  //             currency: item.currency,
+  //             gst: item.gst,
+  //             duties: item.duties,
+  //             budgetCode: item.budgetCode,
+  //           })),
+  //           createdBy: "admin",
+  //           updatedBy: "admin",
+  //         },
+  //       };
+  //       const response = await fetch("http://localhost:5001/serviceOrders", {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify(formattedValues),
+  //       });
+
+  //       if (!response.ok) throw new Error("Failed to submit form");
+
+  //       const result = await response.json();
+  //       message.success("Tender submitted successfully");
+  //       console.log("Submit response:", result);
+  //     } catch (error) {
+  //       message.error("failed to submit SO form");
+  //       console.error("Error submitting SO:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   useEffect(() => {
+  //     fetchData();
+  //   }, [form]);
+
+  //   const handleSubmit = (values) => {
+  //     submitSOData(values);
+  //   };
+
   return (
     <div className="form-container">
-      <h2>Purchase Order (PO)</h2>
-      <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{date:null}}>
-        {/* Tender Requests */}
+      <h2>Service Order</h2>
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <div className="form-section">
           <Form.Item
             label="Tender ID"
@@ -154,31 +287,28 @@ const Form7 = () => {
             rules={[{ required: true, message: "Please select Tender ID" }]}
           >
             <Select mode="multiple" placeholder="Select Tender ID">
-              <Option value="tender1">TenderID 1</Option>
-              <Option value="tender2">TenderID 2</Option>
+              <Option value="tenderID1">TenderID 1</Option>
+              <Option value="tenderID2">TenderID 2</Option>
             </Select>
           </Form.Item>
 
           {/* Consignee Address */}
-          <Form.Item label="Consignee Address" name="consigneeAddress">
-            <TextArea rows={1} placeholder="Enter consignee address" disabled />
+          <Form.Item
+            label="Consignee Address"
+            name="consigneeAddress"
+            //   rules={[
+            //     { required: true, message: "Please enter consignee address" },
+            //   ]}
+          >
+            <TextArea
+              rows={1}
+              placeholder="Enter consignee address"
+              value="Auto-Populated"
+              disabled
+            />
           </Form.Item>
         </div>
-
         <div className="form-section">
-          <Form.Item
-            label="Indent ID"
-            name="indentID"
-            rules={[
-              {
-                required: true,
-                message: "Please select corresponding indent(s)",
-              },
-            ]}
-          >
-            <Input mode="multiple" placeholder="Select corresponding indents" />
-          </Form.Item>
-
           {/* Billing Address */}
           <Form.Item
             label="Billing Address"
@@ -190,15 +320,9 @@ const Form7 = () => {
             <TextArea rows={1} placeholder="Enter billing address" />
           </Form.Item>
 
-          {/* Delivery Period */}
-          <Form.Item
-            label="Delivery Period"
-            name="deliveryPeriod"
-            rules={[
-              { required: true, message: "Please specify the delivery period" },
-            ]}
-          >
-            <Input type="number" placeholder="Select delivery period" />
+          {/* Job completion period */}
+          <Form.Item label="Delivery Period" name="deliveryPeriod">
+            <Input type="number" />
           </Form.Item>
         </div>
         <div>
@@ -356,16 +480,9 @@ const Form7 = () => {
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* Freight Charges */}
-                          <Form.Item
-                            label="Freight Charges"
-                            name="freightCharges"
-                          >
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Enter freight charges"
-                            />
+                          {/* Budget Code */}
+                          <Form.Item label="Budget Code" name="budgetCode">
+                            <Input placeholder="Enter Budget Code" />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -389,21 +506,30 @@ const Form7 = () => {
         </div>
 
         <div className="form-section">
-          {/* Warranty */}
-          <Form.Item label="Warranty" name="warranty">
-            <Input placeholder="Enter warranty terms" />
-          </Form.Item>
-
           {/* if LD clause applicable */}
-          <Form.Item name="ifLDClauseApplicable">
+          <Form.Item
+            // label="Is LD clause applicable?"
+            name="ifLDClauseApplicable"
+          >
             <Checkbox>If LD clause applicable?</Checkbox>
           </Form.Item>
-
-          <Form.Item label="INCO Terms" name="incoTerms">
+          <Form.Item
+            label="INCO Terms"
+            name="incoTerms"
+            //   rules={[
+            //     { required: true, message: "Please specify the INCO terms" },
+            //   ]}
+          >
             <Input.TextArea rows={1} placeholder="Enter INCO Terms" />
           </Form.Item>
 
-          <Form.Item label="Payment Terms" name="paymentTerms">
+          <Form.Item
+            label="Payment Terms"
+            name="paymentTerms"
+            //   rules={[
+            //     { required: true, message: "Please specify the Payment terms" },
+            //   ]}
+          >
             <Input.TextArea rows={1} placeholder="Enter Payment Terms" />
           </Form.Item>
         </div>
@@ -431,20 +557,11 @@ const Form7 = () => {
           <Form.Item
             label="Applicable PBG to be submitted"
             name="applicablePBG"
-            // rules={[{ required: true }]}
-          >
-            <TextArea rows={1} />
-          </Form.Item>
-
-          <Form.Item
-            label="Transporter/freight forwarder Details"
-            name="transporterDetails"
-            //   rules={[{ required: true, message: "Enter Transporter Details" }]}
+            //   rules={[{ required: true }]}
           >
             <TextArea rows={1} />
           </Form.Item>
         </div>
-
         <div className="form-section">
           {/* Vendor's A/C no */}
           <Form.Item
@@ -484,8 +601,8 @@ const Form7 = () => {
         </div>
         {/* Additional Terms & Conditions */}
         {/* <Form.Item label="Additional Terms & Conditions" name="termsConditions">
-          <Input.TextArea placeholder="Enter additional terms and conditions" />
-        </Form.Item> */}
+            <Input.TextArea placeholder="Enter additional terms and conditions" />
+          </Form.Item> */}
 
         {/* Submit Button */}
         <div className="form-section">
@@ -504,4 +621,4 @@ const Form7 = () => {
   );
 };
 
-export default Form7;
+export default Form7a;

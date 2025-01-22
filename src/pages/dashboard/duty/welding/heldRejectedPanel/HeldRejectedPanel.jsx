@@ -118,9 +118,9 @@ const HeldRejectedPanel = () => {
 
   const handleWeldEndChange = (_, value) => {
     const date = moment(value, 'DD/MM/YYYY', true);
-    if (!date.isValid()) {
-      throw new Error('Invalid date format. Please use DD/MM/YYYY.');
-    }
+    // if (!date.isValid()) {
+    //   throw new Error('Invalid date format. Please use DD/MM/YYYY.');
+    // }
     const oneMonthBefore = date.subtract(1, 'months');
     const formattedValue = oneMonthBefore.format('DD/MM/YYYY');
     setWeldStartDate(formattedValue)
