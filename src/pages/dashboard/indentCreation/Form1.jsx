@@ -307,7 +307,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Select placeholder="Select Material Code">
+                            <Select placeholder="Select Material Code" disabled>
                               <Option value="MAT001">MAT001</Option>
                               <Option value="MAT002">MAT002</Option>
                               <Option value="MAT003">MAT003</Option>
@@ -327,7 +327,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Select placeholder="Select Material Description">
+                            <Select placeholder="Select Material Description" disabled>
                               <Option value="Description 1">
                                 Description 1
                               </Option>
@@ -352,7 +352,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Input type="number" placeholder="Enter Quantity" onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
+                            <Input type="number" placeholder="Enter Quantity" disabled onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
                           </Form.Item>
                         </Col>
 
@@ -370,6 +370,7 @@ const Form1 = () => {
                             <Input
                               type="number"
                               placeholder="Enter Unit Price"
+                              disabled
                               onChange={(e)=>handlePriceCalculation(index,'unitPrice',e.target.value)}
                             />
                           </Form.Item>
@@ -383,7 +384,7 @@ const Form1 = () => {
                               { required: true, message: "Please select UOM!" },
                             ]}
                           >
-                            <Select placeholder="Select UOM">
+                            <Select disabled placeholder="Select UOM">
                               <Option value="Kg">Kg</Option>
                               <Option value="Litre">Litre</Option>
                               <Option value="Unit">Unit</Option>
@@ -402,7 +403,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Select placeholder="Select Budget Code">
+                            <Select disabled placeholder="Select Budget Code">
                               <Option value="BUD001">BUD001</Option>
                               <Option value="BUD002">BUD002</Option>
                               <Option value="BUD003">BUD003</Option>
@@ -421,7 +422,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Input placeholder="Enter Material Category" />
+                            <Input disabled placeholder="Enter Material Category" />
                           </Form.Item>
                         </Col>
 
@@ -436,7 +437,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Input placeholder="Enter Material Subcategory" />
+                            <Input disabled placeholder="Enter Material Subcategory" />
                           </Form.Item>
                         </Col>
 
@@ -470,7 +471,7 @@ const Form1 = () => {
         </div>
         <div className="form-section">
           <Form.Item name="projectName" label="Project Name">
-            <Select placeholder="Select project">
+            <Select disabled placeholder="Select project">
               <Option value="project1">Project 1</Option>
               <Option value="project2">Project 2</Option>
             </Select>
@@ -541,7 +542,7 @@ const Form1 = () => {
                     },
                   ]}
                 >
-                  <Input type="decimal" placeholder="Enter Estimated Rate" />
+                  <Input disabled type="number" placeholder="Enter Estimated Rate" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -555,7 +556,7 @@ const Form1 = () => {
                     },
                   ]}
                 >
-                  <Input type="decimal" />
+                  <Input disabled type="number" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -568,7 +569,7 @@ const Form1 = () => {
                     },
                   ]}
                 >
-                  <Select placeholder="Select Material Code">
+                  <Select disabled placeholder="Select Material Code">
                     <Option value="Single">Single</Option>
                     <Option value="Multiple">Multiple</Option>
                   </Select>
@@ -631,7 +632,7 @@ const Form1 = () => {
                         rules={[{ required: true }]}
                         style={{ width: "100%" }}
                       >
-                        <Input />
+                        <Input disabled />
                       </Form.Item>
                       <MinusCircleOutlined onClick={() => remove(name)} />
                     </Space>

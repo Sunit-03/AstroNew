@@ -189,7 +189,7 @@ const Form4 = () => {
             label="Indent ID"
             rules={[{ required: true }]}
           >
-            <Select>
+            <Select mode="multiple">
               <Option value="ID1">ID-1</Option>
               <Option value="ID2">ID-2</Option>
               <Option value="ID3">ID-3</Option>

@@ -21,7 +21,7 @@
             "isItARateContractIndent": true,
             "estimatedRate": 1000.50,
             "periodOfContract": 12.0,
-            "singleAndMultipleJob": "Sine",
+            "singleAndMultipleJob": "Single",
             "materialDetails": [
                 {
                     "materialCode": "M01",

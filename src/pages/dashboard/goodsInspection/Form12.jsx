@@ -1,6 +1,7 @@
-import { Button, DatePicker, Form, Input, InputNumber, Upload } from "antd";
+import { Button, DatePicker, Form, Input, InputNumber, Select, Upload } from "antd";
 import React from "react";
 import { UploadOutlined } from "@ant-design/icons";
+import { Option } from "antd/es/mentions";
 
 const Form12 = () => {
   return (
@@ -45,6 +46,19 @@ const Form12 = () => {
         >
           <InputNumber min={0} />
         </Form.Item>
+      </div>
+      <div className="form-section">
+        <Form.Item
+            label="Goods Return"
+            name="goodsReturn"
+            rules={[{ required: true }]}
+            style={{ width: "32%" }}
+            >
+            <Select>
+                <Option value="permanent">Permanent</Option>
+                <Option value="replacement">Replacement</Option>
+            </Select>
+            </Form.Item>
       </div>
       </Form>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
