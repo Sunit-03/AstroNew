@@ -1,8 +1,8 @@
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Checkbox,
   Col,
-  DatePicker,
   Form,
   Input,
   message,
@@ -13,79 +13,95 @@ import {
 import {
   MinusCircleOutlined,
   PlusOutlined,
-  UploadOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
-import { Option } from "antd/es/mentions";
-import React, { useEffect, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
-import dayjs from "dayjs";
-// import isValid from 'dayjs/plugin/isValid';
+import { Option } from "antd/es/mentions";
 
 const Form7a = () => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [serviceOrders, setServiceOrders] = useState([]);
 
+  // Fetch all service orders
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchServiceOrders = async () => {
       try {
-        const response = await fetch("http://localhost:5001/serviceOrder");
+        const response = await fetch("http://localhost:5001/getServiceOrder");
         const data = await response.json();
 
-        // Populate the form with fetched data
         if (data.responseData) {
-          console.log("Fetched data:", data.responseData);
-          const formattedData = {
-            tenderID: data.responseData.tenderId,
-            // indentID: data.responseData.indentId,
-            consigneeAddress: data.responseData.consignesAddress,
-            billingAddress: data.responseData.billingAddress,
-            deliveryPeriod: data.responseData.jobCompletionPeriod,
-            // warranty: data.responseData.warranty,
-            ifLDClauseApplicable: data.responseData.ifLdClauseApplicable,
-            incoTerms: data.responseData.incoterms,
-            paymentTerms: data.responseData.paymentterms,
-            vendorName: data.responseData.vendorName,
-            vendorAddress: data.responseData.vendorAddress,
-            applicablePBG: data.responseData.applicablePbgToBeSubmitted,
-            // transporterDetails:
-            //   data.responseData.transposterAndFreightForWarderDetails,
-            vendorAccountNo: data.responseData.vendorAccountNumber,
-            vendorIFSCCode: data.responseData.vendeorsZRSCCode,
-            vendorAccountName: data.responseData.vendorAccountName,
-            // createdDate: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSSSSS"),
-            // updatedDate: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSSSSS"),
-
-            lineItems: data.responseData.materials.map(
-              (item) => ({
-                materialCode: item.materialCode,
-                materialDescription: item.materialDescription,
-                quantity: item.quantity,
-                unitRate: item.rate,
-                exchangeRate: item.exchangeRate,
-                currency: item.currency,
-                gst: item.gst,
-                duties: item.duties,
-                budgetCode: item.budgetCode,
-              })
-            ),
-          };
-          form.setFieldsValue(formattedData);
-          message.success("SO Data loaded successfully");
+          setServiceOrders(data.responseData);
         }
       } catch (error) {
-        message.error("Failed to fetch SO data");
-        console.error("Error fetching data:", error);
+        console.error("Error fetching service orders:", error);
+        message.error("Failed to load service orders");
       }
     };
-    fetchData();
-  }, [form]);
+    fetchServiceOrders();
+  }, []);
+
+  // Handle tender search
+  const handleTenderSearch = async () => {
+    setSearchLoading(true);
+    try {
+      const soId = form.getFieldValue("soId");
+      if (!soId) {
+        message.warning("Please enter a SO ID");
+        return;
+      }
+
+      const selectedOrder = serviceOrders.find((order) => order.soId === soId);
+
+      if (selectedOrder) {
+        const formattedData = {
+          tenderID: selectedOrder.tenderId,
+          consigneeAddress: selectedOrder.consignesAddress,
+          billingAddress: selectedOrder.billingAddress,
+          deliveryPeriod: selectedOrder.jobCompletionPeriod,
+          ifLDClauseApplicable: selectedOrder.ifLdClauseApplicable,
+          incoTerms: selectedOrder.incoTerms,
+          paymentTerms: selectedOrder.paymentTerms,
+          vendorName: selectedOrder.vendorName,
+          vendorAddress: selectedOrder.vendorAddress,
+          applicablePBG: selectedOrder.applicablePBGToBeSubmitted,
+          vendorAccountNo: selectedOrder.vendorsAccountNo,
+          vendorIFSCCode: selectedOrder.vendorsIFSCCode,
+          vendorAccountName: selectedOrder.vendorsAccountName,
+          lineItems: selectedOrder.materials.map((item) => ({
+            materialCode: item.materialCode,
+            materialDescription: item.materialDescription,
+            quantity: item.quantity,
+            unitRate: item.rate,
+            exchangeRate: item.exchangeRate,
+            currency: item.currency,
+            gst: item.gst,
+            duties: item.duties,
+            budgetCode: item.budgetCode,
+          })),
+        };
+        form.setFieldsValue(formattedData);
+        message.success("Service order data loaded successfully");
+      } else {
+        message.error("No service order found with this Tender ID");
+      }
+    } catch (error) {
+      message.error("Error searching for service order");
+      console.error("Error:", error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   const submitSOData = async (values) => {
     setLoading(true);
     try {
       const updatedLineItems = values.lineItems.map((item) => ({
         ...item,
-        totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice),
+        totalPrice: parseFloat(item.quantity) * parseFloat(item.unitRate),
       }));
+
       const formattedValues = {
         responseStatus: {
           statusCode: 0,
@@ -94,27 +110,24 @@ const Form7a = () => {
           errorType: null,
         },
         responseData: {
-          tenderID: values.tenderID,
-        //   indentID: values.indentID,
-          consigneeAddress: values.consigneeAddress,
+          tenderId: values.tenderID,
+          consignesAddress: values.consigneeAddress,
           billingAddress: values.billingAddress,
-          deliveryPeriod: values.deliveryPeriod,
-        //   warranty: values.warranty,
-          ifLDClauseApplicable: values.ifLDClauseApplicable,
+          jobCompletionPeriod: values.deliveryPeriod,
+          ifLdClauseApplicable: values.ifLDClauseApplicable,
           incoTerms: values.incoTerms,
           paymentTerms: values.paymentTerms,
           vendorName: values.vendorName,
           vendorAddress: values.vendorAddress,
-          applicablePBG: values.applicablePbgToBeSubmitted,
-        //   transporterDetails: values.transporterDetails,
-          vendorAccountNo: values.vendorAccountNo,
-          vendorIFSCCode: values.vendorIFSCCode,
-          vendorAccountName: values.vendorAccountName,
-          materialDetails: updatedLineItems.map((item) => ({
+          applicablePBGToBeSubmitted: values.applicablePBG,
+          vendorsAccountNo: values.vendorAccountNo,
+          vendorsIFSCCode: values.vendorIFSCCode,
+          vendorsAccountName: values.vendorAccountName,
+          materials: updatedLineItems.map((item) => ({
             materialCode: item.materialCode,
             materialDescription: item.materialDescription,
             quantity: parseFloat(item.quantity),
-            unitRate: parseFloat(item.rate),
+            rate: parseFloat(item.unitRate),
             exchangeRate: item.exchangeRate,
             currency: item.currency,
             gst: item.gst,
@@ -125,6 +138,7 @@ const Form7a = () => {
           updatedBy: "admin",
         },
       };
+
       const response = await fetch("http://localhost:5001/purchaseOrders", {
         method: "POST",
         headers: {
@@ -135,181 +149,53 @@ const Form7a = () => {
 
       if (!response.ok) throw new Error("Failed to submit form");
 
-      const result = await response.json();
-      message.success("SO submitted successfully");
-      console.log("Submit response:", result);
+      message.success("Service order submitted successfully");
     } catch (error) {
-      message.error("failed to submit SO form");
+      message.error("Failed to submit service order form");
       console.error("Error submitting SO:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = (values) => {
-    submitSOData(values);
-  };
-  //   const fetchData = async () => {
-  //     try {
-  //       const response = await fetch("http://localhost:5001/serviceOrder"); // Replace with actual endpoint
-  //       const data = await response.json();
-
-  //       // Populate the form with fetched data
-  //       if (data.responseData) {
-  //         console.log("Fetched data:", data.responseData);
-  //         const formattedData = {
-  //           id: data.responseData.id,
-  //           tenderId: data.responseData.tenderId,
-  //           consignesAddress: data.responseData.consignesAddress,
-  //           billingAddress: data.responseData.billingAddress,
-  //           jobCompletionPeriod: data.responseData.jobCompletionPeriod,
-  //           ifLDClauseApplicable: data.responseData.ifLdClauseApplicable,
-  //           incoTerms: data.responseData.incoTerms,
-  //           paymentTerms: data.responseData.paymentTerms,
-  //           vendorName: data.responseData.vendorName,
-  //           vendorAddress: data.responseData.vendorAddress,
-  //           applicablePBG: data.responseData.applicablePBGToBeSubmitted,
-  //           vendorAccountNo: data.responseData.vendorAccountNumber,
-  //           vendeorsIFSCCode: data.responseData.vendeorsZRSCCode,
-  //           vendorAccountName: data.responseData.vendorAccountName,
-  //           createdDate: data.responseData.createdDate
-  //             ? [new dayjs(data.responseData.createdDate)]
-  //             : undefined,
-  //           updatedDate: data.responseData.updatedDate
-  //             ? [new dayjs(data.responseData.updatedDate)]
-  //             : undefined,
-  //           lineItems: data.responseData.materialDetails.map((item) => ({
-  //             materialCode: item.materialCode,
-  //             materialDescription: item.materialDescription,
-  //             quantity: item.quantity,
-  //             rate: item.rate,
-  //             exchangeRate: item.exchangeRate,
-  //             currency: item.currency,
-  //             gst: item.gst,
-  //             duties: item.duties,
-  //             budgetCode: item.budgetCode,
-  //           })),
-  //         };
-  //         form.setFieldsValue(formattedData);
-  //         setMaterialsData(formattedData.lineItems); // Update materialsData state
-  //         message.success("SO Data loaded successfully");
-  //       }
-  //     } catch (error) {
-  //       message.error("Failed to fetch SO data");
-  //       console.error("Error fetching data:", error);
-  //     }
-  //   };
-
-  //   const submitSOData = async (values) => {
-  //     setLoading(true);
-  //     try {
-  //       const updatedLineItems = values.lineItems.map((item) => ({
-  //         ...item,
-  //         totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice),
-  //       }));
-  //       const formattedValues = {
-  //         responseData: {
-  //           id: values.id,
-  //           tenderId: values.tenderId,
-  //           consigneeAddress: values.consigneeAddress,
-  //           billingAddress: values.billingAddress,
-  //           jobCompletionPeriod: values.jobCompletionPeriod,
-  //           //   warranty: values.warranty,
-  //           ifLDClauseApplicable: values.ifLDClauseApplicable,
-  //           incoTerms: values.incoTerms,
-  //           paymentTerms: values.paymentTerms,
-  //           vendorName: values.vendorName,
-  //           vendorAddress: values.vendorAddress,
-  //           applicablePBG: values.applicablePbgToBeSubmitted,
-  //           //   transporterDetails: values.transporterDetails,
-  //           vendorAccountNo: values.vendorAccountNo,
-  //           vendeorsIFSCCode: values.vendeorsIFSCCode,
-  //           vendorAccountName: values.vendorAccountName,
-  //           //   createdDate:values.createdDate?.[0]?.format('YYYY-MM-DD'),
-  //           //   updatedDate:values.updatedDate?.[0]?.format('YYYY-MM-DD'),
-  //           createdDate: values.responseData.createdDate
-  //             ? dayjs(values.responseData.createdDate)
-  //             : undefined,
-  //           updatedDate: values.responseData.updatedDate
-  //             ? dayjs(values.responseData.updatedDate)
-  //             : undefined,
-  //           materialDetails: updatedLineItems.map((item) => ({
-  //             materialCode: item.materialCode,
-  //             materialDescription: item.materialDescription,
-  //             quantity: parseFloat(item.quantity),
-  //             rate: parseFloat(item.rate),
-  //             exchangeRate: item.exchangeRate,
-  //             currency: item.currency,
-  //             gst: item.gst,
-  //             duties: item.duties,
-  //             budgetCode: item.budgetCode,
-  //           })),
-  //           createdBy: "admin",
-  //           updatedBy: "admin",
-  //         },
-  //       };
-  //       const response = await fetch("http://localhost:5001/serviceOrders", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify(formattedValues),
-  //       });
-
-  //       if (!response.ok) throw new Error("Failed to submit form");
-
-  //       const result = await response.json();
-  //       message.success("Tender submitted successfully");
-  //       console.log("Submit response:", result);
-  //     } catch (error) {
-  //       message.error("failed to submit SO form");
-  //       console.error("Error submitting SO:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   useEffect(() => {
-  //     fetchData();
-  //   }, [form]);
-
-  //   const handleSubmit = (values) => {
-  //     submitSOData(values);
-  //   };
-
   return (
     <div className="form-container">
       <h2>Service Order</h2>
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Row justify={"end"}>
+        <Col>
+      <Form form={form} layout="inline" style={{ marginBottom: "20px" }}>
+          <Form.Item
+            label="SO ID"
+            name="soId"
+            rules={[{ required: true, message: "Please enter SO ID" }]}
+          >
+            <Space>
+                <Input placeholder="Enter SO ID" />
+                <Button
+                type="primary"
+                onClick={handleTenderSearch}
+                loading={searchLoading}
+                >
+                    <SearchOutlined />
+                </Button>
+            </Space>
+          </Form.Item>
+      </Form>
+        </Col>
+      </Row>
+        <Form form={form} layout="vertical" onFinish={submitSOData}>
         <div className="form-section">
           <Form.Item
             label="Tender ID"
             name="tenderID"
-            rules={[{ required: true, message: "Please select Tender ID" }]}
+            rules={[{ required: true, message: "Please enter Tender ID" }]}
           >
-            <Select mode="multiple" placeholder="Select Tender ID">
-              <Option value="tenderID1">TenderID 1</Option>
-              <Option value="tenderID2">TenderID 2</Option>
-            </Select>
+            <Input placeholder="Enter Tender ID" />
+          </Form.Item>
+          <Form.Item label="Consignee Address" name="consigneeAddress">
+            <TextArea rows={1} placeholder="Enter consignee address" disabled />
           </Form.Item>
 
-          {/* Consignee Address */}
-          <Form.Item
-            label="Consignee Address"
-            name="consigneeAddress"
-            //   rules={[
-            //     { required: true, message: "Please enter consignee address" },
-            //   ]}
-          >
-            <TextArea
-              rows={1}
-              placeholder="Enter consignee address"
-              value="Auto-Populated"
-              disabled
-            />
-          </Form.Item>
-        </div>
-        <div className="form-section">
-          {/* Billing Address */}
           <Form.Item
             label="Billing Address"
             name="billingAddress"
@@ -320,7 +206,6 @@ const Form7a = () => {
             <TextArea rows={1} placeholder="Enter billing address" />
           </Form.Item>
 
-          {/* Job completion period */}
           <Form.Item label="Delivery Period" name="deliveryPeriod">
             <Input type="number" />
           </Form.Item>

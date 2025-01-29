@@ -1,94 +1,86 @@
-import React, { useEffect } from "react";
-import {
-  Form,
-  Input,
-  Select,
-  Button,
-  Upload,
-  DatePicker,
-  Checkbox,
-  Space,
-  Row,
-  Col,
-  message,
-} from "antd";
-import {
-  MinusCircleOutlined,
-  PlusOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
+import React, { useEffect, useState } from "react";
+import { Form, Input, Select, Button, Upload, DatePicker, Checkbox, Space, Row, Col, message } from "antd";
+import { MinusCircleOutlined, PlusOutlined, UploadOutlined, SearchOutlined } from "@ant-design/icons";
 import { Option } from "antd/es/mentions";
 import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
-// import React from "react";
 
 const Form1 = () => {
   const [form] = Form.useForm();
-  const [preBidRequired, setPreBidRequired] = React.useState(false);
-  const [rateContractIndent, setRateContractIndent] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
+  const [preBidRequired, setPreBidRequired] = useState(false);
+  const [rateContractIndent, setRateContractIndent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:5001/indent');
-        if (!response.ok) throw new Error('Failed to fetch data');
-        
-        const data = await response.json();
-        
-        if (data.responseData) {
-          // Transform API response data to match form fields
-          const formData = {
-            indentorName: data.responseData.indentorName,
-            indentorId: data.responseData.indentorId,
-            indentorMobileNo: data.responseData.indentorMobileNo,
-            indentorEmail: data.responseData.indentorEmailAddress,
-            consigneeLocation: data.responseData.consignesLocation,
-            projectName: data.responseData.projectName,
-            preBidMeetingRequired: data.responseData.isPreBidMeetingRequired,
-            preBidMeetingDetails: data.responseData.preBidMeetingDate ? 
-              [new dayjs(data.responseData.preBidMeetingDate)] : undefined,
-            preBidMeetingLocation: data.responseData.preBidMeetingVenue,
-            rateContractIndent: data.responseData.isItARateContractIndent,
-            estimatedRate: data.responseData.estimatedRate,
-            periodOfRateContract: data.responseData.periodOfContract,
-            singleOrMultipleJob: data.responseData.singleAndMultipleJob,
-            lineItems: data.responseData.materialDetails.map(item => ({
-              materialCode: item.materialCode,
-              materialDescription: item.materialDescription,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              uom: item.uom,
-              budgetCode: item.budgetCode,
-              materialCategory: item.materialCategory,
-              materialSubcategory: item.materialSubCategory,
-              totalPrice: item.totalPrize,
-              materialOrJobCodeUsedByDept: item.materialAndJob
-            }))
-          };
-          message.success('Form data fetched successfully');
-          // Set form values and update state
-          form.setFieldsValue(formData);
-          setPreBidRequired(data.responseData.isPreBidMeetingRequired);
-          setRateContractIndent(data.responseData.isItARateContractIndent);
-        }
-      } catch (error) {
-        message.error('Failed to fetch form data');
-        console.error('Error fetching data:', error);
+  const handleSearch = async () => {
+    const indentId = form.getFieldValue('indentId');
+    if (!indentId) {
+      message.error('Please enter an Indent ID');
+      return;
+    }
+  
+    try {
+      const response = await fetch(`http://localhost:5001/getIndent?indentorId=${indentId}`);
+      if (!response.ok) throw new Error('Failed to fetch data');
+  
+      const data = await response.json();
+      console.log('Fetched Data:', data); // Debugging: Log the fetched data
+  
+      const matchingIndent = data.responseData.find(item => item.indentorId === indentId);
+      if (!matchingIndent) {
+        message.error('No data found for the given Indent ID');
+        return;
       }
-    };
+  
+      const formData = {
+        indentorName: matchingIndent.indentorName,
+        indentorId: matchingIndent.indentorId,
+        indentorMobileNo: matchingIndent.indentorMobileNo,
+        indentorEmail: matchingIndent.indentorEmailAddress,
+        consigneeLocation: matchingIndent.consignesLocation,
+        projectName: matchingIndent.projectName,
+        preBidMeetingRequired: matchingIndent.isPreBidMeetingRequired,
+        preBidMeetingDetails: matchingIndent.preBidMeetingDate ? 
+          [dayjs(matchingIndent.preBidMeetingDate)] : undefined,
+        preBidMeetingLocation: matchingIndent.preBidMeetingVenue,
+        rateContractIndent: matchingIndent.isItARateContractIndent,
+        estimatedRate: matchingIndent.estimatedRate,
+        periodOfRateContract: matchingIndent.periodOfContract,
+        singleOrMultipleJob: matchingIndent.singleAndMultipleJob,
+        lineItems: matchingIndent.materialDetails.map(item => ({
+          materialCode: item.materialCode,
+          materialDescription: item.materialDescription,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          uom: item.uom,
+          budgetCode: item.budgetCode,
+          materialCategory: item.materialCategory,
+          materialSubcategory: item.materialSubCategory,
+          totalPrice: item.totalPrize,
+          materialOrJobCodeUsedByDept: item.materialAndJob
+        }))
+      };
 
-    fetchData();
-  }, [form]);
+      console.log("Line Items: ", formData.lineItems);
+  
+      console.log('Form Data to Set:', formData); // Debugging: Log the form data
+      form.setFieldsValue(formData); // Set all form fields, including lineItems
+      setPreBidRequired(matchingIndent.isPreBidMeetingRequired);
+      setRateContractIndent(matchingIndent.isItARateContractIndent);
+      message.success('Form data fetched successfully');
+    } catch (error) {
+      message.error('Failed to fetch form data');
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-        const updatedLineItems = values.lineItems.map(item => ({
-            ...item,
-            totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice)
-        }));
-      // Transform form values to match API structure
+      const updatedLineItems = values.lineItems.map(item => ({
+        ...item,
+        totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice)
+      }));
+
       const apiData = {
         responseStatus: {
           statusCode: 0,
@@ -120,7 +112,7 @@ const Form1 = () => {
             quantity: parseFloat(item.quantity),
             unitPrice: parseFloat(item.unitPrice),
             uom: item.uom,
-            totalPrize: item.totalPrice, // Note: API uses 'totalPrize' instead of 'totalPrice'
+            totalPrize: item.totalPrice,
             budgetCode: item.budgetCode,
             materialCategory: item.materialCategory,
             materialSubCategory: item.materialSubcategory,
@@ -142,11 +134,8 @@ const Form1 = () => {
       if (!response.ok) throw new Error('Failed to submit form');
       
       const responseData = await response.json();
-      
-    //   if (responseData.responseStatus.statusCode === 0) {
-        message.success('Form submitted successfully');
-        form.resetFields();
-      
+      message.success('Form submitted successfully');
+      form.resetFields();
     } catch (error) {
       message.error('Failed to submit form: ' + error.message);
       console.error('Error submitting form:', error);
@@ -169,7 +158,6 @@ const Form1 = () => {
         [field]: value
       });
       
-      // Update the total price field
       const updatedItems = [...lineItems];
       updatedItems[index] = {
         ...updatedItems[index],
@@ -183,17 +171,16 @@ const Form1 = () => {
   const handleCheckboxChange = (e) => {
     setPreBidRequired(e.target.checked);
   };
+
   const handleCheckboxChange2 = (e) => {
     setRateContractIndent(e.target.checked);
   };
 
   const props = {
     name: "file",
-    accept: ".png,.jpg,.pdf,.docx", // Accept specific file types
-    // action: "https://your-upload-endpoint.com/upload", // Replace with your server endpoint
+    accept: ".png,.jpg,.pdf,.docx",
     beforeUpload: (file) => {
       if (file.size > 10485760) {
-        // Limit file size to 10MB
         message.error("File size must be smaller than 10MB!");
         return Upload.LIST_IGNORE;
       }
@@ -208,9 +195,28 @@ const Form1 = () => {
       }
     },
   };
+
   return (
     <div className="form-container">
       <h2>Indent Creation</h2>
+      <Row justify="end">
+        <Col>
+            <Form form={form} layout="inline" style={{ marginBottom: 16 }}>
+          <Form.Item
+            label="Indent ID"
+            name="indentId"
+            rules={[{ required: true, message: "Indentor ID is required" }]}
+          >
+            <Space>
+              <Input placeholder="Enter Indent ID" />
+              <Button type="primary" onClick={handleSearch}>
+              <SearchOutlined />
+              </Button>
+            </Space>
+          </Form.Item>
+            </Form>
+        </Col>
+      </Row>
       <Form
         form={form}
         layout="vertical"
@@ -223,32 +229,26 @@ const Form1 = () => {
             name="indentorName"
             rules={[{ required: true, message: "Indentor name is required" }]}
           >
-            <Input value="Auto-populated" disabled />
+            <Input value="Auto-populated" />
           </Form.Item>
 
-          <Form.Item
-            label="Indentor ID"
-            name="indentorId"
-            rules={[{ required: true, message: "Indentor name is required" }]}
-          >
-            <Input value="Auto-populated" disabled />
-          </Form.Item>
 
           <Form.Item
             label="Indentor Mobile No."
             name="indentorMobileNo"
-            rules={[{ required: true, message: "Indentor name is required" }]}
+            rules={[{ required: true, message: "Indentor mobile number is required" }]}
           >
-            <Input value="Auto-populated" disabled />
+            <Input value="Auto-populated" />
           </Form.Item>
         </div>
+
         <div className="form-section">
           <Form.Item
             label="Indentor Email"
             name="indentorEmail"
             rules={[{ required: true, message: "Indentor name is required" }]}
           >
-            <Input value="Auto-populated" disabled />
+            <Input value="Auto-populated"  />
           </Form.Item>
 
           <Form.Item
@@ -256,13 +256,13 @@ const Form1 = () => {
             name="consigneeLocation"
             rules={[{ required: true, message: "Indentor name is required" }]}
           >
-            <TextArea rows={1} value="Auto-populated" disabled />
+            <TextArea rows={1} value="Auto-populated" />
           </Form.Item>
 
           <Form.Item
             name="uploadPriorApprovals"
             label="Upload Prior Approvals"
-            rules={[{ required: true }]}
+            // rules={[{ required: true }]}
           >
             <Upload {...props}>
               <Button type="primary" icon={<UploadOutlined />}>
@@ -307,7 +307,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Select placeholder="Select Material Code" disabled>
+                            <Select placeholder="Select Material Code" >
                               <Option value="MAT001">MAT001</Option>
                               <Option value="MAT002">MAT002</Option>
                               <Option value="MAT003">MAT003</Option>
@@ -327,7 +327,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Select placeholder="Select Material Description" disabled>
+                            <Select placeholder="Select Material Description" >
                               <Option value="Description 1">
                                 Description 1
                               </Option>
@@ -352,7 +352,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Input type="number" placeholder="Enter Quantity" disabled onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
+                            <Input type="number" placeholder="Enter Quantity"  onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
                           </Form.Item>
                         </Col>
 
@@ -370,7 +370,7 @@ const Form1 = () => {
                             <Input
                               type="number"
                               placeholder="Enter Unit Price"
-                              disabled
+                              
                               onChange={(e)=>handlePriceCalculation(index,'unitPrice',e.target.value)}
                             />
                           </Form.Item>
@@ -384,7 +384,7 @@ const Form1 = () => {
                               { required: true, message: "Please select UOM!" },
                             ]}
                           >
-                            <Select disabled placeholder="Select UOM">
+                            <Select  placeholder="Select UOM">
                               <Option value="Kg">Kg</Option>
                               <Option value="Litre">Litre</Option>
                               <Option value="Unit">Unit</Option>
@@ -403,7 +403,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Select disabled placeholder="Select Budget Code">
+                            <Select  placeholder="Select Budget Code">
                               <Option value="BUD001">BUD001</Option>
                               <Option value="BUD002">BUD002</Option>
                               <Option value="BUD003">BUD003</Option>
@@ -422,7 +422,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Input disabled placeholder="Enter Material Category" />
+                            <Input  placeholder="Enter Material Category" />
                           </Form.Item>
                         </Col>
 
@@ -437,7 +437,7 @@ const Form1 = () => {
                               },
                             ]}
                           >
-                            <Input disabled placeholder="Enter Material Subcategory" />
+                            <Input  placeholder="Enter Material Subcategory" />
                           </Form.Item>
                         </Col>
 
@@ -447,7 +447,7 @@ const Form1 = () => {
                             label="Total Price"
                             shouldUpdate
                           >
-                            <Input placeholder="Auto-calculated" disabled />
+                            <Input placeholder="Auto-calculated"  />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -471,7 +471,7 @@ const Form1 = () => {
         </div>
         <div className="form-section">
           <Form.Item name="projectName" label="Project Name">
-            <Select disabled placeholder="Select project">
+            <Select  placeholder="Select project">
               <Option value="project1">Project 1</Option>
               <Option value="project2">Project 2</Option>
             </Select>
@@ -542,7 +542,7 @@ const Form1 = () => {
                     },
                   ]}
                 >
-                  <Input disabled type="number" placeholder="Enter Estimated Rate" />
+                  <Input  type="number" placeholder="Enter Estimated Rate" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -556,7 +556,7 @@ const Form1 = () => {
                     },
                   ]}
                 >
-                  <Input disabled type="number" />
+                  <Input  type="number" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -569,7 +569,7 @@ const Form1 = () => {
                     },
                   ]}
                 >
-                  <Select disabled placeholder="Select Material Code">
+                  <Select  placeholder="Select Material Code">
                     <Option value="Single">Single</Option>
                     <Option value="Multiple">Multiple</Option>
                   </Select>
@@ -582,7 +582,7 @@ const Form1 = () => {
           <Form.Item
             name="uploadGOIorRFP"
             label="Upload GOI or RFP"
-            rules={[{ required: true }]}
+            // rules={[{ required: true }]}
           >
             <Upload {...props}>
               <Button type="primary" icon={<UploadOutlined />}>
@@ -632,7 +632,7 @@ const Form1 = () => {
                         rules={[{ required: true }]}
                         style={{ width: "100%" }}
                       >
-                        <Input disabled />
+                        <Input  />
                       </Form.Item>
                       <MinusCircleOutlined onClick={() => remove(name)} />
                     </Space>
@@ -672,5 +672,3 @@ const Form1 = () => {
 };
 
 export default Form1;
-
-// export default Home
