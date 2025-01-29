@@ -180,7 +180,8 @@ const Form4 = () => {
         <Form.Item
             name="tenderId"
             label="Tender ID"
-            rules={[{ required: true }]}>
+            // rules={[{ required: true }]}
+            >
                 <Input
                 placeholder="Enter Tender ID"
                 value={tenderId}
@@ -268,12 +269,12 @@ const Form4 = () => {
                           <Form.Item
                             name="materialCode"
                             label="Material Code"
-                            rules={[
-                              {
-                                required: true,
-                                message: "Please select a material code!",
-                              },
-                            ]}
+                            // rules={[
+                            //   {
+                            //     required: true,
+                            //     message: "Please select a material code!",
+                            //   },
+                            // ]}
                           >
                             <Select placeholder="Select Material Code" disabled>
                               <Option value="MAT001">MAT001</Option>
@@ -287,13 +288,13 @@ const Form4 = () => {
                           <Form.Item
                             name="materialDescription"
                             label="Material Description"
-                            rules={[
-                              {
-                                required: true,
-                                message:
-                                  "Please select a material description!",
-                              },
-                            ]}
+                            // rules={[
+                            //   {
+                            //     required: true,
+                            //     message:
+                            //       "Please select a material description!",
+                            //   },
+                            // ]}
                           >
                             <Select placeholder="Select Material Description" disabled>
                               <Option value="Description 1">
@@ -313,12 +314,12 @@ const Form4 = () => {
                           <Form.Item
                             name="quantity"
                             label="Quantity"
-                            rules={[
-                              {
-                                required: true,
-                                message: "Please enter quantity!",
-                              },
-                            ]}
+                            // rules={[
+                            //   {
+                            //     required: true,
+                            //     message: "Please enter quantity!",
+                            //   },
+                            // ]}
                           >
                             <Input type="number" placeholder="Enter Quantity" disabled onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
                           </Form.Item>
@@ -328,12 +329,12 @@ const Form4 = () => {
                           <Form.Item
                             name="unitPrice"
                             label="Unit Price"
-                            rules={[
-                              {
-                                required: true,
-                                message: "Please enter unit price!",
-                              },
-                            ]}
+                            // rules={[
+                            //   {
+                            //     required: true,
+                            //     message: "Please enter unit price!",
+                            //   },
+                            // ]}
                           >
                             <Input
                               type="number"
@@ -348,11 +349,11 @@ const Form4 = () => {
                           <Form.Item
                             name="uom"
                             label="UOM"
-                            rules={[
-                              { required: true, message: "Please select UOM!" },
-                            ]}
+                            // rules={[
+                            //   { required: true, message: "Please select UOM!" },
+                            // ]}
                           >
-                            <Select disabled placeholder="Select UOM">
+                            <Select  placeholder="Select UOM">
                               <Option value="Kg">Kg</Option>
                               <Option value="Litre">Litre</Option>
                               <Option value="Unit">Unit</Option>
@@ -364,14 +365,14 @@ const Form4 = () => {
                           <Form.Item
                             name="budgetCode"
                             label="Budget Code"
-                            rules={[
-                              {
-                                required: true,
-                                message: "Please select a budget code!",
-                              },
-                            ]}
+                            // rules={[
+                            //   {
+                            //     required: true,
+                            //     message: "Please select a budget code!",
+                            //   },
+                            // ]}
                           >
-                            <Select disabled placeholder="Select Budget Code">
+                            <Select  placeholder="Select Budget Code">
                               <Option value="BUD001">BUD001</Option>
                               <Option value="BUD002">BUD002</Option>
                               <Option value="BUD003">BUD003</Option>
@@ -382,14 +383,14 @@ const Form4 = () => {
                           <Form.Item
                             name="commonlyUsed"
                             label="Commonly Used by department"
-                            rules={[
-                              {
-                                required: true,
-                                // message: "Please enter material subcategory!",
-                              },
-                            ]}
+                            // rules={[
+                            //   {
+                            //     required: true,
+                            //     // message: "Please enter material subcategory!",
+                            //   },
+                            // ]}
                           >
-                            <Input disabled />
+                            <Input  />
                           </Form.Item>
                         </Col>
 
@@ -399,7 +400,7 @@ const Form4 = () => {
                             label="Total Price"
                             shouldUpdate
                           >
-                            <Input placeholder="Auto-calculated" disabled />
+                            <Input placeholder="Auto-calculated"  />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -579,7 +580,7 @@ const Form4 = () => {
             <Button type="default" htmlType="reset">
               Reset
             </Button>
-            <Button type="primary" htmlType="submit" onClick={loading}>
+            <Button disabled type="primary" htmlType="submit" onClick={loading}>
               Submit
             </Button>
             <Button type="dashed" htmlType="button" onClick={saveDraft}>
