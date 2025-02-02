@@ -145,7 +145,7 @@ const Form1 = () => {
       // ✅ Send API request
       const response = await fetch(
         `https://api.allorigins.win/get?url=${encodeURIComponent(
-          `http://103.181.158.220:8081/astro-service/api/indents/${indentorId}`
+          `http://103.181.158.220:8081/astro-service/api/indents/${indentId}`
         )}`
       , {
         method: "POST",
