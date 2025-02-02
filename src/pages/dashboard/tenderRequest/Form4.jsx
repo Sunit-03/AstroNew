@@ -146,22 +146,22 @@ const fetchIndentData = async () => {
     }
   };
 
-  useEffect(() => {
-    const fetchTenderData = async () => {
-      try {
-        const response = await fetch("http://localhost:5001/getTender"); // Adjust endpoint as needed
-        const data = await response.json();
+//   useEffect(() => {
+//     const fetchTenderData = async () => {
+//       try {
+//         const response = await fetch("http://localhost:5001/getTender"); // Adjust endpoint as needed
+//         const data = await response.json();
 
-        if (data.responseData) {
-          console.log("Fetched data:", data.responseData);
-        }
-      } catch (error) {
-        message.error("Failed to fetch tender data");
-        console.error("Error fetching tender data:", error);
-      }
-    };
-    fetchTenderData();
-  }, [form]);
+//         if (data.responseData) {
+//           console.log("Fetched data:", data.responseData);
+//         }
+//       } catch (error) {
+//         message.error("Failed to fetch tender data");
+//         console.error("Error fetching tender data:", error);
+//       }
+//     };
+//     fetchTenderData();
+//   }, [form]);
 
   const onFinish = async (values) => {
           setLoading(true);

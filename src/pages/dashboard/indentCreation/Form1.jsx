@@ -113,79 +113,54 @@ const Form1 = () => {
   
   
   const handleSubmit = async (values) => {
+    setLoading(true);
     try {
-      setLoading(true); // Show loading indicator
-  
-      // Format the line items correctly
-      const formattedLineItems = values.lineItems.map((item) => ({
-        materialCode: item.materialCode,
-        materialDescription: item.materialDescription,
-        quantity: parseFloat(item.quantity),
-        unitPrice: parseFloat(item.unitPrice),
-        uom: item.uom,
-        totalPrize: parseFloat(item.totalPrice),
-        budgetCode: item.budgetCode,
-        materialCategory: item.materialCategory,
-        materialSubCategory: item.materialSubcategory,
-        materialAndJob: item.materialOrJobCodeUsedByDept,
-      }));
-  
-      // Format the final request data
-      const requestData = {
-        responseStatus: {
-          statusCode: 0,
-          message: null,
-          errorCode: null,
-          errorType: null,
-        },
-        responseData: {
-          indentorName: values.indentorName,
-          indentorId: values.indentorId,
-          indentorMobileNo: values.indentorMobileNo,
-          indentorEmailAddress: values.indentorEmail,
-          consignesLocation: values.consigneeLocation,
-          projectName: values.projectName,
-          isPreBidMeetingRequired: values.preBidMeetingRequired,
-          preBidMeetingDate: values.preBidMeetingDetails?.[0]?.format("YYYY-MM-DD"),
-          preBidMeetingVenue: values.preBidMeetingLocation,
-          isItARateContractIndent: values.rateContractIndent,
-          estimatedRate: parseFloat(values.estimatedRate),
-          periodOfContract: parseFloat(values.periodOfRateContract),
-          singleAndMultipleJob: values.singleOrMultipleJob,
-          materialDetails: formattedLineItems,
-          createdBy: "admin",
-          updatedBy: "admin",
-        },
-      };
-  
-      console.log("Formatted POST Data:", requestData); // Debugging log
-  
-      // Send the POST request
-      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(
-          `http://103.181.158.220:8081/astro-service/api/indents`
-        )}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+      const formData = new FormData();
+
+      // ✅ Convert indent data to JSON string (indentRequestDto)
+      const indentRequestDto = JSON.stringify({
+        indentorName: values.indentorName,
+        indentorId: values.indentorId,
+        indentorMobileNo: values.indentorMobileNo,
+        indentorEmail: values.indentorEmail,
+        projectName: values.projectName,
       });
-  
-      if (!response.ok) {
-        throw new Error(`Failed to submit form: ${response.statusText}`);
+
+      formData.append("indentRequestDTO", indentRequestDto);
+
+      // ✅ Append files if selected
+      if (values.uploadingPriorApprovals?.fileList[0]) {
+        formData.append("uploadingPriorApprovals", values.uploadingPriorApprovals.fileList[0].originFileObj);
       }
-  
-      const responseData = await response.json();
-      console.log("API Response:", responseData); // Debugging log
-  
-      message.success("Form submitted successfully!");
-  
-      form.resetFields(); // Reset the form after successful submission
+      if (values.uploadTenderDocuments?.fileList[0]) {
+        formData.append("uploadTenderDocuments", values.uploadTenderDocuments.fileList[0].originFileObj);
+      }
+      if (values.uploadGOIOrRFP?.fileList[0]) {
+        formData.append("uploadGOIOrRFP", values.uploadGOIOrRFP.fileList[0].originFileObj);
+      }
+      if (values.uploadPACOrBrandPAC?.fileList[0]) {
+        formData.append("uploadPACOrBrandPAC", values.uploadPACOrBrandPAC.fileList[0].originFileObj);
+      }
+
+      // ✅ Send API request
+      const response = await fetch(
+        `https://api.allorigins.win/get?url=${encodeURIComponent(
+          `http://103.181.158.220:8081/astro-service/api/indents/${indentorId}`
+        )}`
+      , {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Failed to submit form");
+
+      message.success("Indent submitted successfully!");
+      form.resetFields();
     } catch (error) {
-      message.error(`Submission failed: ${error.message}`);
-      console.error("Error submitting form:", error);
+      message.error("Error: " + error.message);
+      console.error("Error:", error);
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false);
     }
   };
   
@@ -305,17 +280,11 @@ const Form1 = () => {
             <TextArea rows={1} value="Auto-populated" />
           </Form.Item>
 
-          <Form.Item
-            name="uploadPriorApprovals"
-            label="Upload Prior Approvals"
-            // rules={[{ required: true }]}
-          >
-            <Upload {...props}>
-              <Button type="primary" icon={<UploadOutlined />}>
-                Upload Prior Approvals
-              </Button>
-            </Upload>
-          </Form.Item>
+          <Form.Item label="Upload Prior Approvals" name="uploadingPriorApprovals">
+        <Upload beforeUpload={() => false}>
+          <Button icon={<UploadOutlined />}>Upload Prior Approvals</Button>
+        </Upload>
+      </Form.Item>
         </div>
 
         <div>
@@ -521,17 +490,11 @@ const Form1 = () => {
               <Option value="project2">Project 2</Option>
             </Select>
           </Form.Item>
-          <Form.Item
-            name="uploadTenderDocuments"
-            label="Upload Tender Documents"
-            // rules={[{ required: true }]}
-          >
-            <Upload {...props}>
-              <Button type="primary" icon={<UploadOutlined />}>
-                Upload Tender Documents
-              </Button>
-            </Upload>
-          </Form.Item>
+          <Form.Item label="Upload Tender Documents" name="uploadTenderDocuments">
+        <Upload beforeUpload={() => false}>
+          <Button icon={<UploadOutlined />}>Upload Tender Documents</Button>
+        </Upload>
+      </Form.Item>
         </div>
 
         <Form.Item name="preBidMeetingRequired" valuePropName="checked">
@@ -624,28 +587,16 @@ const Form1 = () => {
           )}
         </div>
         <div className="form-section">
-          <Form.Item
-            name="uploadGOIorRFP"
-            label="Upload GOI or RFP"
-            // rules={[{ required: true }]}
-          >
-            <Upload {...props}>
-              <Button type="primary" icon={<UploadOutlined />}>
-                Upload GOI/RFP
-              </Button>
-            </Upload>
-          </Form.Item>
-          <Form.Item
-            name="uploadPACorBrandPAC"
-            label="Upload PAC or Brand PAC"
-            // rules={[{ required: true }]}
-          >
-            <Upload {...props}>
-              <Button type="primary" icon={<UploadOutlined />}>
-                Upload PAC/Brand PAC
-              </Button>
-            </Upload>
-          </Form.Item>
+        <Form.Item label="Upload GOI or RFP" name="uploadGOIOrRFP">
+        <Upload beforeUpload={() => false}>
+          <Button icon={<UploadOutlined />}>Upload GOI/RFP</Button>
+        </Upload>
+      </Form.Item>
+      <Form.Item label="Upload PAC or Brand PAC" name="uploadPACOrBrandPAC">
+        <Upload beforeUpload={() => false}>
+          <Button icon={<UploadOutlined />}>Upload PAC/Brand PAC</Button>
+        </Upload>
+      </Form.Item>
         </div>
 
         <div>
