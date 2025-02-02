@@ -1,57 +1,124 @@
-import { Button, Checkbox, Col, DatePicker, Form, Input, message, Row, Select, Space, Upload } from "antd";
+import {
+  Button,
+  Checkbox,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  message,
+  Row,
+  Select,
+  Space,
+  Upload,
+} from "antd";
 import { Option } from "antd/es/mentions";
-import { MinusCircleOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  MinusCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import React, { useEffect, useState } from "react";
 import TextArea from "antd/es/input/TextArea";
-import dayjs from "dayjs";
+// import { message } from "antd"; // Import for notifications
 
 const Form4 = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [tenderId, setTenderId] = useState("");
+  const [indentData, setIndentData] = useState([]); // Store fetched indent data
+  const [selectedIndentMaterials, setSelectedIndentMaterials] = useState([]); // Store materials dynamically
 
-  const handleSearch = async () => {
-    if (!tenderId) {
-      message.warning("Please enter an Tender ID");
-      return;
-    }
+  
+const parseXML = (xmlText) => {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, "text/xml");
 
-    try {
-      const response = await fetch("http://localhost:5001/getTender"); // Adjust endpoint as needed
-      const data = await response.json();
+  const responseData = xml.getElementsByTagName("responseData")[0];
 
-      if (data.responseData) {
-        const tender = data.responseData.find((item) => item.tenderId === tenderId);
-        if (tender) {
-          form.setFieldsValue({
-            title: tender.titleOfTender,
-            openingDate: tender.openingDate ? dayjs(tender.openingDate, "DD/MM/YYYY") : undefined,
-            closingDate: tender.closingDate ? dayjs(tender.closingDate, "DD/MM/YYYY") : undefined,
-            indentId: tender.indentId,
-            indentMaterials: tender.indentMaterials,
-            modeOfProcurement: tender.modeOfProcurement,
-            bidType: tender.bidType,
-            lastDate: tender.lastDateOfSubmission ? dayjs(tender.lastDateOfSubmission, "DD/MM/YYYY") : undefined,
-            applicableTaxes: tender.applicableTaxes,
-            consignesAndBillinngAddress: tender.consignesAndBillinngAddress,
-            incoTerms: tender.incoTerms,
-            paymentTerms: tender.paymentTerms,
-            ldClause: tender.ldClause,
-            applicablePerformance: tender.applicablePerformance,
-            bidSecurity: tender.bidSecurityDeclaration,
-            mllStatusDeclaration: tender.mllStatusDeclaration,
-            singleOrMultipleVendors: tender.singleAndMultipleVendors,
-            preBidDiscussions: tender.preBidDisscussions,
-            tenderUpload: tender.uploadTenderDocuments,
-          });
-          message.success("Tender data loaded successfully");
-        } else {
-          message.warning("No tender found with the provided Tender ID");
-        }
+  // Convert indent data into an array
+  const indents = responseData.getElementsByTagName("indentorId");
+  return Array.from(indents).map((indent) => ({
+    indentorId: indent.textContent, // Get Indent ID
+  }));
+};
+
+const fetchIndentData = async () => {
+  try {
+    const response = await fetch("http://103.181.158.220:8081/astro-service/api/indents");
+    if (!response.ok) throw new Error("Failed to fetch indent data");
+
+    const text = await response.text(); // Get XML response as text
+    const data = parseXML(text); // Convert XML to JSON
+
+    console.log("Converted JSON Data:", data);
+    setIndentData(data); // Store JSON data in state
+  } catch (error) {
+    console.error("Error fetching indent data:", error);
+    message.error("Failed to fetch indent data");
+  }
+};
+
+  useEffect(() => {
+    fetchIndentData();
+  }, []);
+
+  // Handle indent selection
+  const handleIndentChange = (selectedIndentIds) => {
+    let newMaterials = [];
+
+    selectedIndentIds.forEach((indentId) => {
+      const indent = indentData.find((item) => item.indentorId === indentId);
+      if (indent && indent.materialDetails) {
+        newMaterials = [...newMaterials, ...indent.materialDetails];
       }
-    } catch (error) {
-      message.error("Failed to fetch tender data");
-      console.error("Error fetching tender data:", error);
+    });
+
+    // Remove duplicates based on `materialCode`
+    const uniqueMaterials = newMaterials.filter(
+      (item, index, self) =>
+        index === self.findIndex((t) => t.materialCode === item.materialCode)
+    );
+
+    setSelectedIndentMaterials(uniqueMaterials); // Store selected materials
+
+    // Update the form's `lineItems`
+    form.setFieldsValue({ lineItems: uniqueMaterials.map(formatMaterial) });
+  };
+
+  // Function to format material data for `Form.List`
+  const formatMaterial = (material) => ({
+    materialCode: material.materialCode,
+    materialDescription: material.materialDescription,
+    quantity: material.quantity,
+    unitPrice: material.unitPrice,
+    uom: material.uom,
+    budgetCode: material.budgetCode,
+    totalPrice: material.totalPrize,
+    materialCategory: material.materialCategory,
+    materialSubCategory: material.materialSubCategory,
+  });
+
+  // Handle material selection for individual line items
+  const handleMaterialSelect = (materialCode, index) => {
+    const selectedMaterial = selectedIndentMaterials.find(
+      (m) => m.materialCode === materialCode
+    );
+    if (selectedMaterial) {
+      const lineItems = form.getFieldValue("lineItems");
+      const updatedItems = [...lineItems];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        materialCode: selectedMaterial.materialCode,
+        materialDescription: selectedMaterial.materialDescription,
+        quantity: selectedMaterial.quantity,
+        unitPrice: selectedMaterial.unitPrice,
+        uom: selectedMaterial.uom,
+        budgetCode: selectedMaterial.budgetCode,
+        totalPrice: selectedMaterial.totalPrize,
+        materialCategory: selectedMaterial.materialCategory,
+        materialSubCategory: selectedMaterial.materialSubCategory,
+      };
+      form.setFieldsValue({ lineItems: updatedItems });
     }
   };
 
@@ -62,19 +129,19 @@ const Form4 = () => {
   };
 
   const handlePriceCalculation = (index, field, value) => {
-    const lineItems = form.getFieldValue('lineItems');
+    const lineItems = form.getFieldValue("lineItems");
     if (lineItems[index]) {
       const totalPrice = calculateTotalPrice({
         ...lineItems[index],
-        [field]: value
+        [field]: value,
       });
-      
+
       const updatedItems = [...lineItems];
       updatedItems[index] = {
         ...updatedItems[index],
-        totalPrice: totalPrice
+        totalPrice: totalPrice,
       };
-      
+
       form.setFieldsValue({ lineItems: updatedItems });
     }
   };
@@ -96,70 +163,58 @@ const Form4 = () => {
     fetchTenderData();
   }, [form]);
 
-  // POST request to submit form data
-  const submitTenderData = async (values) => {
-    setLoading(true);
-    try {
-      // Format dates to match API expectations
-      const formattedValues = {
-        responseStatus: {
-          statusCode: 0,
-          message: null,
-          errorCode: null,
-          errorType: null,
-        },
-        responseData: {
-          titleOfTender: values.titleOfTender,
-          openingDate: values.openingDate?.[0]?.format("YYYY-MM-DD"),
-          closingDate: values.closingDate?.[0]?.format("YYYY-MM-DD"),
-          indentId: values.indentId,
-          indentMaterials: values.indentMaterials,
-          modeOfProcurement: values.modeOfProcurement,
-          bidType: values.bidType,
-          lastDateOfSubmission: values.lastDate?.[0]?.format("YYYY-MM-DD"),
-          applicableTaxes: values.applicableTaxes,
-          consignesAndBillinngAddress: values.tenderTerms,
-          paymentTerms: values.paymentTerms,
-          ldClause: values.ldClause,
-          applicablePerformance: values.applicablePerformance,
-          bidSecurityDeclaration: values.bidSecurity,
-          mllStatusDeclaration: values.mllStatusDeclaration,
-          singleAndMultipleVendors: values.singleOrMultipleVendors,
-          preBidDiscussions: values.preBidDiscussions,
-          // Add any additional fields needed by your API
-          updatedBy: "currentUser", // Replace with actual user info
-          createdBy: "currentUser", // Replace with actual user info
-          createdDate: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSSSSS"),
-          updatedDate: dayjs().format("YYYY-MM-DDTHH:mm:ss.SSSSSSS"),
-        },
-      };
-
-      const response = await fetch("http://localhost:5001/tenders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formattedValues),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      message.success("Tender submitted successfully");
-      console.log("Submit response:", result);
-    } catch (error) {
-      message.error("Failed to submit tender data");
-      console.error("Error submitting tender:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onFinish = (values) => {
-    submitTenderData(values);
-  };
+  const onFinish = async (values) => {
+          setLoading(true);
+          try {
+            // Format the data for backend API
+            const formattedData = {
+              titleOfTender: values.title,
+              openingDate: values.openingDate?.format("YYYY-MM-DD"),
+              closingDate: values.closingDate?.format("YYYY-MM-DD"),
+              indentIds: values.indentId, // Multiple indent IDs
+              bidType: values.bidType,
+              lastDate: values.lastDate?.format("YYYY-MM-DD"),
+              applicableTaxes: values.applicableTaxes,
+              consigneeAndBillingAddress: values.consigneesAndBillingAddress,
+              incoTerms: values.incoTerms,
+              paymentTerms: values.paymentTerms,
+              ldClause: values.ldClause,
+              applicablePerformance: values.applicablePerformance,
+              bidSecurity: values.bidSecurity || false,
+              mllStatusDeclaration: values.mllStatusDeclaration || false,
+              singleOrMultipleVendors: values.singleOrMultipleVendors,
+              preBidDiscussions: values.preBidDiscussions,
+              lineItems: values.lineItems.map(item => ({
+                materialCode: item.materialCode,
+                materialDescription: item.materialDescription,
+                quantity: parseFloat(item.quantity),
+                unitPrice: parseFloat(item.unitPrice),
+                uom: item.uom,
+                totalPrice: parseFloat(item.totalPrice),
+                budgetCode: item.budgetCode
+              })),
+            };
+      
+            // ✅ Send data to backend
+            const response = await fetch("http://103.181.158.220:8081/astro-service/api/tenders", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formattedData),
+            });
+      
+            if (!response.ok) throw new Error("Failed to submit tender");
+      
+            message.success("Tender submitted successfully!");
+            form.resetFields();
+          } catch (error) {
+            message.error("Failed to submit tender: " + error.message);
+            console.error("Error submitting tender:", error);
+          } finally {
+            setLoading(false);
+          }
+        };
 
   // Function to handle save draft (basic implementation)
   const saveDraft = async () => {
@@ -175,25 +230,7 @@ const Form4 = () => {
   return (
     <div className="form-container">
       <h2>Tender Request</h2>
-      <Row justify="end">
-        <Col>
-        <Form.Item
-            name="tenderId"
-            label="Tender ID"
-            // rules={[{ required: true }]}
-            >
-                <Input
-                placeholder="Enter Tender ID"
-                value={tenderId}
-                onChange={(e) => setTenderId(e.target.value)}
-                style={{ width: 200 }}
-                />
-                <Button type="primary" onClick={handleSearch}>
-                    <SearchOutlined/>
-                </Button>
-            </Form.Item>
-        </Col>
-      </Row>
+
       <Form
         form={form}
         onFinish={onFinish}
@@ -201,252 +238,147 @@ const Form4 = () => {
         initialValues={{ date: null }}
       >
         <div className="form-section">
-          <Form.Item
-            name="title"
-            label="Title of the Tender"
-            rules={[
-              { required: true, message: "Please enter the tender title" },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="openingDate"
-            label="Opening Date"
-            rules={[
-              { required: true, message: "Please select the opening date" },
-            ]}
-          >
-            <DatePicker />
-          </Form.Item>
-          <Form.Item
-            name="closingDate"
-            label="Closing Date"
-            rules={[
-              { required: true, message: "Please select the closing date" },
-            ]}
-          >
-            <DatePicker />
-          </Form.Item>
-          <Form.Item
-            name="indentId"
-            label="Indent ID"
-            rules={[{ required: true }]}
-          >
-            <Select mode="multiple">
-              <Option value="ID1">ID-1</Option>
-              <Option value="ID2">ID-2</Option>
-              <Option value="ID3">ID-3</Option>
-            </Select>
-          </Form.Item>
-        </div>
+             <Form.Item name="title" label="Title of the Tender" rules={[{ required: true }]}>
+               <Input />
+             </Form.Item>
+             <Form.Item name="openingDate" label="Opening Date" rules={[{ required: true }]}>
+               <DatePicker />
+             </Form.Item>
+             <Form.Item name="closingDate" label="Closing Date" rules={[{ required: true }]}>
+               <DatePicker />
+             </Form.Item>
+           </div>
+           <Form.Item name="indentId" label="Indent ID" rules={[{ required: true }]}>
+             <Select mode="multiple">
+               {indentData.map((indent) => (
+                 <Option key={indent.indentorId} value={indent.indentorId}>
+                   {indent.indentorId}
+                 </Option>
+               ))}
+             </Select>
+           </Form.Item>
+
+
         <div className="form-section">
           <div>
-          <Form.List name="lineItems" initialValue={[{}]}>
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, fieldKey, ...restField },index) => (
-                  <div
-                    key={key}
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "20px",
-                      marginBottom: "5px",
-                      backgroundColor: "#f9f9f9",
-                    }}
-                  >
-                    <Space
+            <Form.List name="lineItems">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }, index) => (
+                    <div
                       key={key}
                       style={{
-                        display: "flex",
-                        marginBottom: 20,
-                        flexWrap: "wrap",
+                        border: "1px solid #ccc",
+                        padding: "20px",
+                        marginBottom: "20px",
                       }}
-                      align="start"
                     >
-                      <Row gutter={16}>
-                        <Col span={8}>
-                          <Form.Item
-                            name="materialCode"
-                            label="Material Code"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please select a material code!",
-                            //   },
-                            // ]}
-                          >
-                            <Select placeholder="Select Material Code" disabled>
-                              <Option value="MAT001">MAT001</Option>
-                              <Option value="MAT002">MAT002</Option>
-                              <Option value="MAT003">MAT003</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
+                      <Space
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          width: "100%",
+                        }}
+                        align="start"
+                      >
+                        <Row gutter={16} style={{ width: "100%" }}>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "materialCode"]}
+                              label="Material Code"
+                            >
+                              <Input placeholder="Auto-filled" disabled />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={8}>
-                          <Form.Item
-                            name="materialDescription"
-                            label="Material Description"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message:
-                            //       "Please select a material description!",
-                            //   },
-                            // ]}
-                          >
-                            <Select placeholder="Select Material Description" disabled>
-                              <Option value="Description 1">
-                                Description 1
-                              </Option>
-                              <Option value="Description 2">
-                                Description 2
-                              </Option>
-                              <Option value="Description 3">
-                                Description 3
-                              </Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "materialDescription"]}
+                              label="Material Description"
+                            >
+                              <Input placeholder="Auto-filled" disabled />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={8}>
-                          <Form.Item
-                            name="quantity"
-                            label="Quantity"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please enter quantity!",
-                            //   },
-                            // ]}
-                          >
-                            <Input type="number" placeholder="Enter Quantity" disabled onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
-                          </Form.Item>
-                        </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "quantity"]}
+                              label="Quantity"
+                            >
+                              <Input
+                                type="number"
+                                placeholder="Enter Quantity"
+                              />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={8}>
-                          <Form.Item
-                            name="unitPrice"
-                            label="Unit Price"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please enter unit price!",
-                            //   },
-                            // ]}
-                          >
-                            <Input
-                              type="number"
-                              placeholder="Enter Unit Price"
-                              disabled
-                              onChange={(e)=>handlePriceCalculation(index,'unitPrice',e.target.value)}
-                            />
-                          </Form.Item>
-                        </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "unitPrice"]}
+                              label="Unit Price"
+                            >
+                              <Input
+                                type="number"
+                                placeholder="Enter Unit Price"
+                              />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={8}>
-                          <Form.Item
-                            name="uom"
-                            label="UOM"
-                            // rules={[
-                            //   { required: true, message: "Please select UOM!" },
-                            // ]}
-                          >
-                            <Select  placeholder="Select UOM">
-                              <Option value="Kg">Kg</Option>
-                              <Option value="Litre">Litre</Option>
-                              <Option value="Unit">Unit</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "uom"]}
+                              label="UOM"
+                            >
+                              <Input placeholder="Auto-filled" disabled />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={8}>
-                          <Form.Item
-                            name="budgetCode"
-                            label="Budget Code"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please select a budget code!",
-                            //   },
-                            // ]}
-                          >
-                            <Select  placeholder="Select Budget Code">
-                              <Option value="BUD001">BUD001</Option>
-                              <Option value="BUD002">BUD002</Option>
-                              <Option value="BUD003">BUD003</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-                        <Col span={8}>
-                          <Form.Item
-                            name="commonlyUsed"
-                            label="Commonly Used by department"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     // message: "Please enter material subcategory!",
-                            //   },
-                            // ]}
-                          >
-                            <Input  />
-                          </Form.Item>
-                        </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "budgetCode"]}
+                              label="Budget Code"
+                            >
+                              <Input placeholder="Auto-filled" disabled />
+                            </Form.Item>
+                          </Col>
 
-                        <Col span={8}>
-                          <Form.Item
-                            name="totalPrice"
-                            label="Total Price"
-                            shouldUpdate
-                          >
-                            <Input placeholder="Auto-calculated"  />
-                          </Form.Item>
-                        </Col>
-                      </Row>
-                      <MinusCircleOutlined onClick={() => remove(name)} />
-                    </Space>
-                  </div>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    icon={<PlusOutlined />}
-                    style={{ width: "32%" }}
-                  >
-                    Add Item
-                  </Button>
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
+                          <Col span={8}>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "totalPrice"]}
+                              label="Total Price"
+                            >
+                              <Input placeholder="Auto-calculated" disabled />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    </div>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      icon={<PlusOutlined />}
+                      style={{ width: "32%" }}
+                    >
+                      Add Item
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+          </div>
         </div>
 
-        </div>
-        {/* <div className="form-section">
-          <Form.Item
-            name="indentMaterials"
-            label="Indent Materials"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="modeOfProcurement"
-            label="Mode of Procurement"
-            rules={[{ required: true }]}
-          >
-            <Select>
-              <Option value="GeM">GeM</Option>
-              <Option value="CPPP">CPPP</Option>
-              <Option value="Proprietary">Proprietary</Option>
-              <Option value="Limited Tender">Limited Tender</Option>
-            </Select>
-          </Form.Item> */}
-          <div className="form-section">
-
+        <div className="form-section">
           <Form.Item
             name="bidType"
             label="Bid Type"
@@ -477,14 +409,14 @@ const Form4 = () => {
           >
             <Input />
           </Form.Item>
-        <Form.Item
+          <Form.Item
             name="consignesAndBillinngAddress"
             label="Consignees and Billing Address"
             rules={[{ required: true }]}
           >
             <Input.TextArea rows={1} />
           </Form.Item>
-          </div>
+        </div>
         <div className="form-section">
           <Form.Item
             name="incoTerms"
@@ -517,7 +449,6 @@ const Form4 = () => {
           </Form.Item>
         </div>
         <div className="form-section">
-
           <Form.Item name="bidSecurity" label="Bid Security Declaration">
             <Checkbox>Yes</Checkbox>
           </Form.Item>
@@ -580,7 +511,7 @@ const Form4 = () => {
             <Button type="default" htmlType="reset">
               Reset
             </Button>
-            <Button disabled type="primary" htmlType="submit" onClick={loading}>
+            <Button type="primary" htmlType="submit" loading={loading}>
               Submit
             </Button>
             <Button type="dashed" htmlType="button" onClick={saveDraft}>
@@ -594,3 +525,191 @@ const Form4 = () => {
 };
 
 export default Form4;
+
+// import { 
+//     Button, Checkbox, Col, DatePicker, Form, Input, message, Row, Select, Space, Upload 
+//   } from "antd";
+//   import { Option } from "antd/es/mentions";
+//   import { MinusCircleOutlined, PlusOutlined, UploadOutlined } from "@ant-design/icons";
+//   import React, { useEffect, useState } from "react";
+//   import TextArea from "antd/es/input/TextArea";
+  
+//   const Form4 = () => {
+//     const [form] = Form.useForm();
+//     const [loading, setLoading] = useState(false);
+//     const [indentData, setIndentData] = useState([]); // Stores Indent IDs from backend
+  
+//     // ✅ Fetch Indent IDs from backend for dropdown
+//     useEffect(() => {
+//       const fetchIndentData = async () => {
+//         try {
+//           const response = await fetch("http://103.181.158.220:8081/astro-service/api/indents");
+//           if (!response.ok) throw new Error("Failed to fetch indent data");
+          
+//           const data = await response.json();
+//           if (data.responseData) setIndentData(data.responseData);
+//         } catch (error) {
+//           console.error("Error fetching indent data:", error);
+//           message.error("Failed to fetch indent data");
+//         }
+//       };
+//       fetchIndentData();
+//     }, []);
+  
+//     // ✅ Handle form submission
+//     const onFinish = async (values) => {
+//       setLoading(true);
+//       try {
+//         // Format the data for backend API
+//         const formattedData = {
+//           titleOfTender: values.title,
+//           openingDate: values.openingDate?.format("YYYY-MM-DD"),
+//           closingDate: values.closingDate?.format("YYYY-MM-DD"),
+//           indentIds: values.indentId, // Multiple indent IDs
+//           bidType: values.bidType,
+//           lastDate: values.lastDate?.format("YYYY-MM-DD"),
+//           applicableTaxes: values.applicableTaxes,
+//           consigneeAndBillingAddress: values.consigneesAndBillingAddress,
+//           incoTerms: values.incoTerms,
+//           paymentTerms: values.paymentTerms,
+//           ldClause: values.ldClause,
+//           applicablePerformance: values.applicablePerformance,
+//           bidSecurity: values.bidSecurity || false,
+//           mllStatusDeclaration: values.mllStatusDeclaration || false,
+//           singleOrMultipleVendors: values.singleOrMultipleVendors,
+//           preBidDiscussions: values.preBidDiscussions,
+//           lineItems: values.lineItems.map(item => ({
+//             materialCode: item.materialCode,
+//             materialDescription: item.materialDescription,
+//             quantity: parseFloat(item.quantity),
+//             unitPrice: parseFloat(item.unitPrice),
+//             uom: item.uom,
+//             totalPrice: parseFloat(item.totalPrice),
+//             budgetCode: item.budgetCode
+//           })),
+//         };
+  
+//         // ✅ Send data to backend
+//         const response = await fetch("http://103.181.158.220:8081/astro-service/api/tenders", {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
+//           body: JSON.stringify(formattedData),
+//         });
+  
+//         if (!response.ok) throw new Error("Failed to submit tender");
+  
+//         message.success("Tender submitted successfully!");
+//         form.resetFields();
+//       } catch (error) {
+//         message.error("Failed to submit tender: " + error.message);
+//         console.error("Error submitting tender:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+  
+//     return (
+//       <div className="form-container">
+//         <h2>Tender Request</h2>
+  
+//         <Form form={form} onFinish={onFinish} layout="vertical">
+//           <div className="form-section">
+//             <Form.Item name="title" label="Title of the Tender" rules={[{ required: true }]}>
+//               <Input />
+//             </Form.Item>
+//             <Form.Item name="openingDate" label="Opening Date" rules={[{ required: true }]}>
+//               <DatePicker />
+//             </Form.Item>
+//             <Form.Item name="closingDate" label="Closing Date" rules={[{ required: true }]}>
+//               <DatePicker />
+//             </Form.Item>
+//           </div>
+  
+//           {/* Indent ID Selection */}
+//           <Form.Item name="indentId" label="Indent ID" rules={[{ required: true }]}>
+//             <Select mode="multiple">
+//               {indentData.map((indent) => (
+//                 <Option key={indent.indentorId} value={indent.indentorId}>
+//                   {indent.indentorId}
+//                 </Option>
+//               ))}
+//             </Select>
+//           </Form.Item>
+  
+//           {/* Line Items */}
+//           <Form.List name="lineItems" initialValue={[{}]}>
+//             {(fields, { add, remove }) => (
+//               <>
+//                 {fields.map(({ key, name, ...restField }, index) => (
+//                   <div key={key} style={{ border: "1px solid #ccc", padding: "20px", marginBottom: "20px" }}>
+//                     <Space style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+//                       <Row gutter={16}>
+//                         <Col span={8}>
+//                           <Form.Item {...restField} name={[name, "materialCode"]} label="Material Code" rules={[{ required: true }]}>
+//                             <Input placeholder="Material Code" />
+//                           </Form.Item>
+//                         </Col>
+//                         <Col span={8}>
+//                           <Form.Item {...restField} name={[name, "materialDescription"]} label="Material Description">
+//                             <Input placeholder="Material Description" disabled />
+//                           </Form.Item>
+//                         </Col>
+//                         <Col span={8}>
+//                           <Form.Item {...restField} name={[name, "quantity"]} label="Quantity" rules={[{ required: true }]}>
+//                             <Input type="number" placeholder="Enter Quantity" />
+//                           </Form.Item>
+//                         </Col>
+//                       </Row>
+//                       <MinusCircleOutlined onClick={() => remove(name)} />
+//                     </Space>
+//                   </div>
+//                 ))}
+//                 <Form.Item>
+//                   <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
+//                     Add Item
+//                   </Button>
+//                 </Form.Item>
+//               </>
+//             )}
+//           </Form.List>
+  
+//           {/* Other Tender Details */}
+//           <Form.Item name="bidType" label="Bid Type" rules={[{ required: true }]}>
+//             <Select>
+//               <Option value="Single Bid">Single Bid</Option>
+//               <Option value="Two Bid">Two Bid</Option>
+//             </Select>
+//           </Form.Item>
+  
+//           <Form.Item name="lastDate" label="Last Date of Submission" rules={[{ required: true }]}>
+//             <DatePicker />
+//           </Form.Item>
+  
+//           <Form.Item name="applicableTaxes" label="Applicable Taxes" rules={[{ required: true }]}>
+//             <Input />
+//           </Form.Item>
+  
+//           <Form.Item name="consigneesAndBillingAddress" label="Consignees and Billing Address" rules={[{ required: true }]}>
+//             <TextArea rows={1} />
+//           </Form.Item>
+  
+//           {/* Submit Buttons */}
+//           <Form.Item>
+//             <div style={{ display: "flex", justifyContent: "space-between" }}>
+//               <Button type="default" htmlType="reset">
+//                 Reset
+//               </Button>
+//               <Button type="primary" htmlType="submit" loading={loading}>
+//                 Submit
+//               </Button>
+//             </div>
+//           </Form.Item>
+//         </Form>
+//       </div>
+//     );
+//   };
+  
+//   export default Form4;
+  
