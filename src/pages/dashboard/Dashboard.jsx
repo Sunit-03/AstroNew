@@ -31,6 +31,7 @@ import Form19 from './gatePass/Form19';
 import Form20 from './demandAndIssue/Form20';
 import Form7a from './serviceOrder/Form7a';
 import Form7b from './contingencyPurchase/Form7b';
+import Queue from './queue/Queue';
 // import Form21 from './lineItems/Form21';
 
 const { Search } = Input;
@@ -142,6 +143,8 @@ const Dashboard = () => {
             return <Form7a />
         case 22:
             return <Form7b />
+        case 23:
+            return <Queue />
         default:
           break
       }

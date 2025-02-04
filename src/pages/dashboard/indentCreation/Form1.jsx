@@ -280,7 +280,7 @@ const Form1 = () => {
             <TextArea rows={1} value="Auto-populated" />
           </Form.Item>
 
-          <Form.Item label="Upload Prior Approvals" name="uploadingPriorApprovals">
+          <Form.Item label="Upload Prior Approvals" name="uploadingPriorApprovals"  rules={[{required:true}]}>
         <Upload beforeUpload={() => false}>
           <Button icon={<UploadOutlined />}>Upload Prior Approvals</Button>
         </Upload>
@@ -312,6 +312,7 @@ const Form1 = () => {
                       <Row gutter={16}>
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="materialCode"
                             label="Material Code"
                             // rules={[
@@ -331,6 +332,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="materialDescription"
                             label="Material Description"
                             // rules={[
@@ -357,6 +359,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="quantity"
                             label="Quantity"
                             // rules={[
@@ -372,6 +375,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="unitPrice"
                             label="Unit Price"
                             // rules={[
@@ -392,6 +396,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="uom"
                             label="UOM"
                             // rules={[
@@ -408,6 +413,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="budgetCode"
                             label="Budget Code"
                             // rules={[
@@ -427,6 +433,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="materialCategory"
                             label="Material Category"
                             // rules={[
@@ -442,6 +449,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="materialSubcategory"
                             label="Material Subcategory"
                             // rules={[
@@ -457,6 +465,7 @@ const Form1 = () => {
 
                         <Col span={8}>
                           <Form.Item
+                          {...restField}
                             name="totalPrice"
                             label="Total Price"
                             shouldUpdate
@@ -587,12 +596,12 @@ const Form1 = () => {
           )}
         </div>
         <div className="form-section">
-        <Form.Item label="Upload GOI or RFP" name="uploadGOIOrRFP">
+        <Form.Item label="Upload GOI or RFP" name="uploadGOIOrRFP" rules={[{required:true}]} >
         <Upload beforeUpload={() => false}>
           <Button icon={<UploadOutlined />}>Upload GOI/RFP</Button>
         </Upload>
       </Form.Item>
-      <Form.Item label="Upload PAC or Brand PAC" name="uploadPACOrBrandPAC">
+      <Form.Item label="Upload PAC or Brand PAC" name="uploadPACOrBrandPAC"  rules={[{required:true}]}>
         <Upload beforeUpload={() => false}>
           <Button icon={<UploadOutlined />}>Upload PAC/Brand PAC</Button>
         </Upload>
@@ -610,7 +619,6 @@ const Form1 = () => {
                       border: "1px solid #ccc",
                       padding: "20px",
                       marginBottom: "5px",
-                      backgroundColor: "#f9f9f9",
                     }}
                   >
                     <Space
@@ -623,6 +631,7 @@ const Form1 = () => {
                       align="start"
                     >
                       <Form.Item
+                        {...restField}
                         name="materialOrJobCodeUsedByDept"
                         label="Material/Job Code Used By Dept"
                         // rules={[{ required: true }]}

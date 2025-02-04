@@ -33,7 +33,14 @@ import { ActiveTabContext } from "../context/dashboardActiveTabContext";
 import { icons } from "antd/es/image/PreviewGroup";
 
 const items = [
-  {
+    {
+        key: "1a",
+        icon: <FileAddOutlined />,
+        label: "Queue",
+        activeTab: 23,
+        path: "/",
+      },
+    {
     key: "1",
     icon: <FileAddOutlined />,
     label: "Indent Creation",

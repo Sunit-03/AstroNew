@@ -29,34 +29,51 @@ const Form4 = () => {
   const [selectedIndentMaterials, setSelectedIndentMaterials] = useState([]); // Store materials dynamically
 
   
-const parseXML = (xmlText) => {
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(xmlText, "text/xml");
-
-  const responseData = xml.getElementsByTagName("responseData")[0];
-
-  // Convert indent data into an array
-  const indents = responseData.getElementsByTagName("indentorId");
-  return Array.from(indents).map((indent) => ({
-    indentorId: indent.textContent, // Get Indent ID
-  }));
-};
-
-const fetchIndentData = async () => {
-  try {
-    const response = await fetch("http://103.181.158.220:8081/astro-service/api/indents");
-    if (!response.ok) throw new Error("Failed to fetch indent data");
-
-    const text = await response.text(); // Get XML response as text
-    const data = parseXML(text); // Convert XML to JSON
-
-    console.log("Converted JSON Data:", data);
-    setIndentData(data); // Store JSON data in state
-  } catch (error) {
-    console.error("Error fetching indent data:", error);
-    message.error("Failed to fetch indent data");
-  }
-};
+  const parseXML = (xmlText) => {
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, "text/xml");
+  
+    const responseData = xml.getElementsByTagName("responseData")[0];
+  
+    // Convert indent data into an array
+    const indents = responseData.getElementsByTagName("indent");
+    return Array.from(indents).map((indent) => ({
+      indentorId: indent.getElementsByTagName("indentorId")[0]?.textContent, // Get Indent ID
+      materialDetails: Array.from(indent.getElementsByTagName("materialDetails")[0]?.children || []).map(
+        (material) => ({
+          materialCode: material.getElementsByTagName("materialCode")[0]?.textContent,
+          materialDescription: material.getElementsByTagName("materialDescription")[0]?.textContent,
+          quantity: material.getElementsByTagName("quantity")[0]?.textContent,
+          unitPrice: material.getElementsByTagName("unitPrice")[0]?.textContent,
+          uom: material.getElementsByTagName("uom")[0]?.textContent,
+          budgetCode: material.getElementsByTagName("budgetCode")[0]?.textContent,
+          totalPrize: material.getElementsByTagName("totalPrize")[0]?.textContent,
+          materialCategory: material.getElementsByTagName("materialCategory")[0]?.textContent,
+          materialSubCategory: material.getElementsByTagName("materialSubCategory")[0]?.textContent,
+        })
+      ),
+    }));
+  };
+  
+  const fetchIndentData = async () => {
+    try {
+        const response = await fetch(
+            `https://api.allorigins.win/get?url=${encodeURIComponent(
+              `http://103.181.158.220:8081/astro-service/api/indents`
+            )}`
+        );
+      if (!response.ok) throw new Error("Failed to fetch indent data");
+  
+      const text = await response.text(); // Get XML response as text
+      const data = parseXML(text); // Convert XML to JSON
+  
+      console.log("Converted JSON Data:", data);
+      setIndentData(data); // Store JSON data in state
+    } catch (error) {
+      console.error("Error fetching indent data:", error);
+      message.error("Failed to fetch indent data");
+    }
+  };
 
   useEffect(() => {
     fetchIndentData();
@@ -65,22 +82,22 @@ const fetchIndentData = async () => {
   // Handle indent selection
   const handleIndentChange = (selectedIndentIds) => {
     let newMaterials = [];
-
+  
     selectedIndentIds.forEach((indentId) => {
       const indent = indentData.find((item) => item.indentorId === indentId);
       if (indent && indent.materialDetails) {
         newMaterials = [...newMaterials, ...indent.materialDetails];
       }
     });
-
+  
     // Remove duplicates based on `materialCode`
     const uniqueMaterials = newMaterials.filter(
       (item, index, self) =>
         index === self.findIndex((t) => t.materialCode === item.materialCode)
     );
-
+  
     setSelectedIndentMaterials(uniqueMaterials); // Store selected materials
-
+  
     // Update the form's `lineItems`
     form.setFieldsValue({ lineItems: uniqueMaterials.map(formatMaterial) });
   };
@@ -249,132 +266,132 @@ const fetchIndentData = async () => {
              </Form.Item>
            </div>
            <Form.Item name="indentId" label="Indent ID" rules={[{ required: true }]}>
-             <Select mode="multiple">
-               {indentData.map((indent) => (
-                 <Option key={indent.indentorId} value={indent.indentorId}>
-                   {indent.indentorId}
-                 </Option>
-               ))}
-             </Select>
-           </Form.Item>
+            <Select mode="multiple" onChange={handleIndentChange}>
+                {indentData.map((indent) => (
+                <Option key={indent.indentorId} value={indent.indentorId}>
+                    {indent.indentorId}
+                </Option>
+                ))}
+            </Select>
+            </Form.Item>
 
 
         <div className="form-section">
           <div>
-            <Form.List name="lineItems">
-              {(fields, { add, remove }) => (
-                <>
-                  {fields.map(({ key, name, ...restField }, index) => (
-                    <div
-                      key={key}
-                      style={{
-                        border: "1px solid #ccc",
-                        padding: "20px",
-                        marginBottom: "20px",
-                      }}
-                    >
-                      <Space
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          width: "100%",
-                        }}
-                        align="start"
-                      >
-                        <Row gutter={16} style={{ width: "100%" }}>
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "materialCode"]}
-                              label="Material Code"
-                            >
-                              <Input placeholder="Auto-filled" disabled />
-                            </Form.Item>
-                          </Col>
+          <Form.List name="lineItems">
+  {(fields, { add, remove }) => (
+    <>
+      {fields.map(({ key, name, ...restField }, index) => (
+        <div
+          key={key}
+          style={{
+            border: "1px solid #ccc",
+            padding: "20px",
+            marginBottom: "20px",
+          }}
+        >
+          <Space
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+            }}
+            align="start"
+          >
+            <Row gutter={16} style={{ width: "100%" }}>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "materialCode"]}
+                  label="Material Code"
+                >
+                  <Input placeholder="Auto-filled" disabled />
+                </Form.Item>
+              </Col>
 
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "materialDescription"]}
-                              label="Material Description"
-                            >
-                              <Input placeholder="Auto-filled" disabled />
-                            </Form.Item>
-                          </Col>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "materialDescription"]}
+                  label="Material Description"
+                >
+                  <Input placeholder="Auto-filled" disabled />
+                </Form.Item>
+              </Col>
 
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "quantity"]}
-                              label="Quantity"
-                            >
-                              <Input
-                                type="number"
-                                placeholder="Enter Quantity"
-                              />
-                            </Form.Item>
-                          </Col>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "quantity"]}
+                  label="Quantity"
+                >
+                  <Input
+                    type="number"
+                    placeholder="Enter Quantity"
+                  />
+                </Form.Item>
+              </Col>
 
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "unitPrice"]}
-                              label="Unit Price"
-                            >
-                              <Input
-                                type="number"
-                                placeholder="Enter Unit Price"
-                              />
-                            </Form.Item>
-                          </Col>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "unitPrice"]}
+                  label="Unit Price"
+                >
+                  <Input
+                    type="number"
+                    placeholder="Enter Unit Price"
+                  />
+                </Form.Item>
+              </Col>
 
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "uom"]}
-                              label="UOM"
-                            >
-                              <Input placeholder="Auto-filled" disabled />
-                            </Form.Item>
-                          </Col>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "uom"]}
+                  label="UOM"
+                >
+                  <Input placeholder="Auto-filled" disabled />
+                </Form.Item>
+              </Col>
 
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "budgetCode"]}
-                              label="Budget Code"
-                            >
-                              <Input placeholder="Auto-filled" disabled />
-                            </Form.Item>
-                          </Col>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "budgetCode"]}
+                  label="Budget Code"
+                >
+                  <Input placeholder="Auto-filled" disabled />
+                </Form.Item>
+              </Col>
 
-                          <Col span={8}>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "totalPrice"]}
-                              label="Total Price"
-                            >
-                              <Input placeholder="Auto-calculated" disabled />
-                            </Form.Item>
-                          </Col>
-                        </Row>
-                        <MinusCircleOutlined onClick={() => remove(name)} />
-                      </Space>
-                    </div>
-                  ))}
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      icon={<PlusOutlined />}
-                      style={{ width: "32%" }}
-                    >
-                      Add Item
-                    </Button>
-                  </Form.Item>
-                </>
-              )}
-            </Form.List>
+              <Col span={8}>
+                <Form.Item
+                  {...restField}
+                  name={[name, "totalPrice"]}
+                  label="Total Price"
+                >
+                  <Input placeholder="Auto-calculated" disabled />
+                </Form.Item>
+              </Col>
+            </Row>
+            <MinusCircleOutlined onClick={() => remove(name)} />
+          </Space>
+        </div>
+      ))}
+      <Form.Item>
+        <Button
+          type="dashed"
+          onClick={() => add()}
+          icon={<PlusOutlined />}
+          style={{ width: "32%" }}
+        >
+          Add Item
+        </Button>
+      </Form.Item>
+    </>
+  )}
+</Form.List>
           </div>
         </div>
 
