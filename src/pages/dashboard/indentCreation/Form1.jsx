@@ -292,12 +292,12 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"materialCode"]}
                             label="Material Code"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please select a material code!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select a material code!",
+                              },
+                            ]}
                           >
                             <Select placeholder="Select Material Code" >
                               <Option value="MAT001">MAT001</Option>
@@ -312,13 +312,13 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"materialDescription"]}
                             label="Material Description"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message:
-                            //       "Please select a material description!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message:
+                                  "Please select a material description!",
+                              },
+                            ]}
                           >
                             <Select placeholder="Select Material Description" >
                               <Option value="Description 1">
@@ -339,12 +339,12 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"quantity"]}
                             label="Quantity"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please enter quantity!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter quantity!",
+                              },
+                            ]}
                           >
                             <Input type="number" placeholder="Enter Quantity"  onChange={(e)=>handlePriceCalculation(index,'quantity',e.target.value)} />
                           </Form.Item>
@@ -355,12 +355,12 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"unitPrice"]}
                             label="Unit Price"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please enter unit price!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter unit price!",
+                              },
+                            ]}
                           >
                             <Input
                               type="number"
@@ -376,9 +376,9 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"uom"]}
                             label="UOM"
-                            // rules={[
-                            //   { required: true, message: "Please select UOM!" },
-                            // ]}
+                            rules={[
+                              { required: true, message: "Please select UOM!" },
+                            ]}
                           >
                             <Select  placeholder="Select UOM">
                               <Option value="Kg">Kg</Option>
@@ -393,12 +393,12 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"budgetCode"]}
                             label="Budget Code"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please select a budget code!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select a budget code!",
+                              },
+                            ]}
                           >
                             <Select  placeholder="Select Budget Code">
                               <Option value="BUD001">BUD001</Option>
@@ -413,12 +413,12 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"materialCategory"]}
                             label="Material Category"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please enter material category!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter material category!",
+                              },
+                            ]}
                           >
                             <Input  placeholder="Enter Material Category" />
                           </Form.Item>
@@ -429,12 +429,12 @@ const Form1 = () => {
                           {...restField}
                             name={[name,"materialSubcategory"]}
                             label="Material Subcategory"
-                            // rules={[
-                            //   {
-                            //     required: true,
-                            //     message: "Please enter material subcategory!",
-                            //   },
-                            // ]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter material subcategory!",
+                              },
+                            ]}
                           >
                             <Input  placeholder="Enter Material Subcategory" />
                           </Form.Item>
@@ -455,7 +455,7 @@ const Form1 = () => {
                         {...restField}
                         name={[name,"materialOrJobCodeUsedByDept"]}
                         label="Material/Job Code Used By Dept"
-                        // rules={[{ required: true }]}
+                        rules={[{ required: true }]}
                         style={{ width: "100%" }}
                       >
                         <Input  />
