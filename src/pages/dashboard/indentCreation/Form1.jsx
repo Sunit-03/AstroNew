@@ -21,9 +21,9 @@ const Form1 = () => {
     try {
       // Fetch XML data via CORS proxy
       const response = await fetch(
-        `https://api.allorigins.win/get?url=${encodeURIComponent(
+        `https://api.allorigins.win/get?url=${
           `http://103.181.158.220:8081/astro-service/api/indents/${indentorId}`
-        )}`
+        }`
       );
   
       if (!response.ok) throw new Error(`Failed to fetch data: ${response.statusText}`);
@@ -144,9 +144,7 @@ const Form1 = () => {
 
       // ✅ Send API request
       const response = await fetch(
-        `https://api.allorigins.win/get?url=${encodeURIComponent(
           `http://103.181.158.220:8081/astro-service/api/indents`
-        )}`
       , {
         method: "POST",
         body: formData,
@@ -195,26 +193,6 @@ const Form1 = () => {
 
   const handleCheckboxChange2 = (e) => {
     setRateContractIndent(e.target.checked);
-  };
-
-  const props = {
-    name: "file",
-    accept: ".png,.jpg,.pdf,.docx",
-    beforeUpload: (file) => {
-      if (file.size > 10485760) {
-        message.error("File size must be smaller than 10MB!");
-        return Upload.LIST_IGNORE;
-      }
-      return true;
-    },
-    onChange(info) {
-      const { status } = info.file;
-      if (status === "done") {
-        message.success(`${info.file.name} file uploaded successfully.`);
-      } else if (status === "error") {
-        message.error(`${info.file.name} file upload failed.`);
-      }
-    },
   };
 
   return (
@@ -291,7 +269,7 @@ const Form1 = () => {
           <Form.List name="lineItems" initialValue={[{}]}>
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, fieldKey, ...restField },index) => (
+                {fields.map(({ key, name, ...restField },index) => (
                   <div
                     key={key}
                     style={{
@@ -301,7 +279,6 @@ const Form1 = () => {
                       }}
                   >
                     <Space
-                      key={key}
                       style={{
                         display: "flex",
                         marginBottom: 20,
@@ -313,7 +290,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="materialCode"
+                            name={[name,"materialCode"]}
                             label="Material Code"
                             // rules={[
                             //   {
@@ -333,7 +310,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="materialDescription"
+                            name={[name,"materialDescription"]}
                             label="Material Description"
                             // rules={[
                             //   {
@@ -360,7 +337,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="quantity"
+                            name={[name,"quantity"]}
                             label="Quantity"
                             // rules={[
                             //   {
@@ -376,7 +353,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="unitPrice"
+                            name={[name,"unitPrice"]}
                             label="Unit Price"
                             // rules={[
                             //   {
@@ -397,7 +374,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="uom"
+                            name={[name,"uom"]}
                             label="UOM"
                             // rules={[
                             //   { required: true, message: "Please select UOM!" },
@@ -414,7 +391,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="budgetCode"
+                            name={[name,"budgetCode"]}
                             label="Budget Code"
                             // rules={[
                             //   {
@@ -434,7 +411,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="materialCategory"
+                            name={[name,"materialCategory"]}
                             label="Material Category"
                             // rules={[
                             //   {
@@ -450,7 +427,7 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="materialSubcategory"
+                            name={[name,"materialSubcategory"]}
                             label="Material Subcategory"
                             // rules={[
                             //   {
@@ -466,12 +443,23 @@ const Form1 = () => {
                         <Col span={8}>
                           <Form.Item
                           {...restField}
-                            name="totalPrice"
+                            name={[name,"totalPrice"]}
                             label="Total Price"
                             shouldUpdate
                           >
                             <Input placeholder="Auto-calculated"  />
                           </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                        <Form.Item
+                        {...restField}
+                        name={[name,"materialOrJobCodeUsedByDept"]}
+                        label="Material/Job Code Used By Dept"
+                        // rules={[{ required: true }]}
+                        style={{ width: "100%" }}
+                      >
+                        <Input  />
+                      </Form.Item>
                         </Col>
                       </Row>
                       <MinusCircleOutlined onClick={() => remove(name)} />
@@ -606,56 +594,6 @@ const Form1 = () => {
           <Button icon={<UploadOutlined />}>Upload PAC/Brand PAC</Button>
         </Upload>
       </Form.Item>
-        </div>
-
-        <div>
-          <Form.List name="lineItems" initialValue={[{}]}>
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, fieldKey, ...restField }) => (
-                  <div
-                    key={key}
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "20px",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    <Space
-                      key={key}
-                      style={{
-                        display: "flex",
-                        marginBottom: 20,
-                        flexWrap: "wrap",
-                      }}
-                      align="start"
-                    >
-                      <Form.Item
-                        {...restField}
-                        name="materialOrJobCodeUsedByDept"
-                        label="Material/Job Code Used By Dept"
-                        // rules={[{ required: true }]}
-                        style={{ width: "100%" }}
-                      >
-                        <Input  />
-                      </Form.Item>
-                      <MinusCircleOutlined onClick={() => remove(name)} />
-                    </Space>
-                  </div>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    icon={<PlusOutlined />}
-                    style={{ width: "32%" }}
-                  >
-                    Add Item
-                  </Button>
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
         </div>
 
         <Form.Item>
