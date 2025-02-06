@@ -286,7 +286,12 @@ const Form1 = () => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        initialValues={{ date: null }}
+        initialValues={{ date: null,
+                uploadingPriorApprovals: [],
+                uploadTenderDocuments: [],
+                uploadGOIOrRFP: [],
+                uploadPACOrBrandPAC: []
+         }}
       >
         <div className="form-section">
           <Form.Item
