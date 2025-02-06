@@ -109,60 +109,78 @@ const Form1 = () => {
       console.error("Error fetching data:", error);
     }
   };
-  
-  
-  
+
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
       const formData = new FormData();
-
-      // ✅ Convert indent data to JSON string (indentRequestDto)
-      const indentRequestDto = JSON.stringify({
+  
+      // 1. Structure the complete JSON payload with ALL required fields
+      const indentRequestDto = {
         indentorName: values.indentorName,
         indentorId: values.indentorId,
         indentorMobileNo: values.indentorMobileNo,
         indentorEmail: values.indentorEmail,
+        consigneeLocation: values.consigneeLocation,
         projectName: values.projectName,
+        preBidMeetingRequired: values.preBidMeetingRequired,
+        preBidMeetingDetails: values.preBidMeetingDetails,
+        preBidMeetingLocation: values.preBidMeetingLocation,
+        rateContractIndent: values.rateContractIndent,
+        estimatedRate: values.estimatedRate,
+        periodOfRateContract: values.periodOfRateContract,
+        singleOrMultipleJob: values.singleOrMultipleJob,
+        lineItems: values.lineItems.map(item => ({
+          ...item,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          totalPrice: Number(item.totalPrice)
+        }))
+      };
+  
+      // 2. Append as JSON blob with correct content type
+      const jsonBlob = new Blob([JSON.stringify(indentRequestDto)], {
+        type: "application/json"
       });
-
-      formData.append("indentRequestDTO", indentRequestDto);
-
-      // ✅ Append files if selected
-      if (values.uploadingPriorApprovals?.fileList[0]) {
-        formData.append("uploadingPriorApprovals", values.uploadingPriorApprovals.fileList[0].originFileObj);
-      }
-      if (values.uploadTenderDocuments?.fileList[0]) {
-        formData.append("uploadTenderDocuments", values.uploadTenderDocuments.fileList[0].originFileObj);
-      }
-      if (values.uploadGOIOrRFP?.fileList[0]) {
-        formData.append("uploadGOIOrRFP", values.uploadGOIOrRFP.fileList[0].originFileObj);
-      }
-      if (values.uploadPACOrBrandPAC?.fileList[0]) {
-        formData.append("uploadPACOrBrandPAC", values.uploadPACOrBrandPAC.fileList[0].originFileObj);
-      }
-
-      // ✅ Send API request
-      const response = await fetch(
-          `http://103.181.158.220:8081/astro-service/api/indents`
-      , {
+      formData.append("indentRequestDto", jsonBlob);
+  
+      // 3. Append files with server-expected field names
+      const appendFile = (fieldName, fileList) => {
+        if (fileList && fileList[0]?.originFileObj) {
+          formData.append(fieldName, fileList[0].originFileObj);
+        }
+      };
+  
+      appendFile("priorApprovals", values.uploadingPriorApprovals?.fileList);
+      appendFile("tenderDocuments", values.uploadTenderDocuments?.fileList);
+      appendFile("goiOrRfp", values.uploadGOIOrRFP?.fileList);
+      appendFile("pacOrBrandPac", values.uploadPACOrBrandPAC?.fileList);
+  
+      // 4. Send request with proper headers
+      const response = await fetch("http://103.181.158.220:8081/astro-service/api/indents", {
         method: "POST",
         body: formData,
+        // Headers should NOT include Content-Type for FormData
+        // Browser will set correct boundary automatically
       });
-
-      if (!response.ok) throw new Error("Failed to submit form");
-
+  
+      // 5. Handle response
+      const responseBody = await response.text();
+      if (!response.ok) {
+        console.error("Server response:", responseBody);
+        throw new Error(`Server responded with ${response.status}`);
+      }
+  
       message.success("Indent submitted successfully!");
       form.resetFields();
     } catch (error) {
-      message.error("Error: " + error.message);
-      console.error("Error:", error);
+      message.error(`Submission failed: ${error.message}`);
+      console.error("Submission error:", error);
     } finally {
       setLoading(false);
     }
   };
   
-
   const calculateTotalPrice = (record) => {
     const quantity = parseFloat(record.quantity) || 0;
     const unitPrice = parseFloat(record.unitPrice) || 0;

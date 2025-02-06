@@ -30,7 +30,7 @@ const Form7b = () => {
     
     try {
       const response = await fetch(
-        `http://localhost:5001/getContingencyPurchase`
+        `http://103.181.158.220:8081/astro-service/api/contigency-purchase/${contingencyId}`
       );
       const data = await response.json();
 

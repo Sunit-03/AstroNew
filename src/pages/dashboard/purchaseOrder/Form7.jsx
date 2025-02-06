@@ -33,7 +33,7 @@ import {
   
       setSearching(true);
       try {
-        const response = await fetch("http://localhost:5001/getPurchaseOrder");
+        const response = await fetch(`http://103.181.158.220:8081/astro-service/api/purchase-orders/${poId}`);
         const data = await response.json();
   
         // Find the matching purchase order
@@ -128,7 +128,7 @@ import {
           },
         };
   
-        const response = await fetch("http://localhost:5001/purchaseOrders", {
+        const response = await fetch("http://103.181.158.220:8081/astro-service/api/purchase-orders", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -220,7 +220,6 @@ import {
                         border: "1px solid #ccc",
                         padding: "20px",
                         marginBottom: "5px",
-                        backgroundColor: "#f9f9f9",
                       }}
                     >
                       <Space

@@ -27,8 +27,15 @@ const Form7a = () => {
   // Fetch all service orders
   useEffect(() => {
     const fetchServiceOrders = async () => {
+      const soId = form.getFieldValue("soID");
+      if (!soId) {
+        message.error("Please enter an SO ID");
+        return;
+      }
       try {
-        const response = await fetch("http://localhost:5001/getServiceOrder");
+        const response = await fetch(
+          `http://103.181.158.220:8081/astro-service/api/service-orders/${soId}`
+        );
         const data = await response.json();
 
         if (data.responseData) {
@@ -139,13 +146,16 @@ const Form7a = () => {
         },
       };
 
-      const response = await fetch("http://localhost:5001/purchaseOrders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formattedValues),
-      });
+      const response = await fetch(
+        "http://103.181.158.220:8081/astro-service/api/service-orders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formattedValues),
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to submit form");
 
@@ -163,27 +173,27 @@ const Form7a = () => {
       <h2>Service Order</h2>
       <Row justify={"end"}>
         <Col>
-      <Form form={form} layout="inline" style={{ marginBottom: "20px" }}>
-          <Form.Item
-            label="SO ID"
-            name="soId"
-            rules={[{ required: true, message: "Please enter SO ID" }]}
-          >
-            <Space>
+          <Form form={form} layout="inline" style={{ marginBottom: "20px" }}>
+            <Form.Item
+              label="SO ID"
+              name="soId"
+              rules={[{ required: true, message: "Please enter SO ID" }]}
+            >
+              <Space>
                 <Input placeholder="Enter SO ID" />
                 <Button
-                type="primary"
-                onClick={handleTenderSearch}
-                loading={searchLoading}
+                  type="primary"
+                  onClick={handleTenderSearch}
+                  loading={searchLoading}
                 >
-                    <SearchOutlined />
+                  <SearchOutlined />
                 </Button>
-            </Space>
-          </Form.Item>
-      </Form>
+              </Space>
+            </Form.Item>
+          </Form>
         </Col>
       </Row>
-        <Form form={form} layout="vertical" onFinish={submitSOData}>
+      <Form form={form} layout="vertical" onFinish={submitSOData}>
         <div className="form-section">
           <Form.Item
             label="Tender ID"
