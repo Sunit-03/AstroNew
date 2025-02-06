@@ -10,58 +10,77 @@ const Form1 = () => {
   const [preBidRequired, setPreBidRequired] = useState(false);
   const [rateContractIndent, setRateContractIndent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [indentIdEnabled, setIndentIdEnabled] = useState(false);
 
+  
   const handleSearch = async () => {
+    // On first click, enable the Indent ID field
+    if (!indentIdEnabled) {
+      setIndentIdEnabled(true);
+      return;
+    }
+
+    // Get the indent ID from the form
     const indentorId = form.getFieldValue("indentId");
     if (!indentorId) {
       message.error("Please enter an Indent ID");
       return;
     }
-  
+
+    setLoading(true);
+
     try {
-      // Fetch XML data via CORS proxy
+      // Fetch XML data using AllOrigins as a CORS proxy
       const response = await fetch(
-        `https://api.allorigins.win/get?url=${
+        `https://api.allorigins.win/get?url=${encodeURIComponent(
           `http://103.181.158.220:8081/astro-service/api/indents/${indentorId}`
-        }`
+        )}`
       );
-  
-      if (!response.ok) throw new Error(`Failed to fetch data: ${response.statusText}`);
-  
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
+
       const data = await response.json();
-      console.log("Raw API Response:", data); // Debugging log
-  
+      console.log("Raw API Response:", data);
+
       if (!data.contents) {
         throw new Error("Invalid response: No contents field found");
       }
-  
-      // Extract Base64-encoded XML from `data.contents`
+
+      // Extract Base64-encoded XML (after "base64,")
       const base64EncodedXml = data.contents.split("base64,")[1];
-  
       if (!base64EncodedXml) {
         throw new Error("Failed to extract Base64 content from API response");
       }
-  
-      // Decode Base64 XML
+
+      // Decode the Base64 XML text
       const decodedXmlText = atob(base64EncodedXml);
-      console.log("Decoded XML:", decodedXmlText); // Debugging log
-  
-      // Convert XML to DOM object
+      console.log("Decoded XML:", decodedXmlText);
+
+      // Parse the XML into a DOM object
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(decodedXmlText, "text/xml");
-  
-      // Extract responseData from XML
+
+      // Get the main responseData element
       const responseData = xmlDoc.getElementsByTagName("responseData")[0];
-  
-      // Function to get text content from XML
-      const getText = (tag, parent = responseData) =>
-        parent?.getElementsByTagName(tag)[0]?.textContent || "";
-  
-      // ✅ Fix: Extract multiple `materialDetails` entries correctly
+      if (!responseData) {
+        throw new Error("No responseData element found in XML");
+      }
+
+      // Helper function to get text from a tag
+      const getText = (tag, parent = responseData) => {
+        const el = parent.getElementsByTagName(tag)[0];
+        const text = el ? el.textContent.trim() : "";
+        console.log(`Tag: ${tag} => "${text}"`); // Debug log
+        return text;
+      };
+
+      // --- Extract material details ---
       const materialNodes = responseData.getElementsByTagName("materialDetails");
       const materialDetails = [];
       for (let i = 0; i < materialNodes.length; i++) {
-        const item = materialNodes[i]; // Each `<materialDetails>` node
+        const item = materialNodes[i];
         materialDetails.push({
           materialCode: getText("materialCode", item),
           materialDescription: getText("materialDescription", item),
@@ -75,8 +94,8 @@ const Form1 = () => {
           materialOrJobCodeUsedByDept: getText("materialAndJob", item),
         });
       }
-  
-      // ✅ Map data to form fields
+
+      // --- Map standard fields ---
       const formData = {
         indentorName: getText("indentorName"),
         indentorId: getText("indentorId"),
@@ -93,29 +112,71 @@ const Form1 = () => {
         estimatedRate: parseFloat(getText("estimatedRate")),
         periodOfRateContract: parseFloat(getText("periodOfContract")),
         singleOrMultipleJob: getText("singleAndMultipleJob"),
-        lineItems: materialDetails, // ✅ This now correctly extracts multiple items
+        lineItems: materialDetails,
       };
-  
-      console.log("Parsed JSON:", formData); // Debugging log
-      console.log("line items:", formData.lineItems); // Debugging log
-      // ✅ Set the form values
+
+      // --- Extract file fields using the correct XML tag names ---
+      const priorApprovalsFileName = getText("uploadingPriorApprovalsFileName");
+      if (priorApprovalsFileName) {
+        formData.uploadingPriorApprovals = [{
+          uid: '-1',
+          name: priorApprovalsFileName,
+          status: 'done'
+        }];
+      } else {
+        console.log("No uploadingPriorApprovalsFileName found.");
+      }
+
+      const tenderDocumentsFileName = getText("uploadTenderDocumentsFileName");
+      if (tenderDocumentsFileName) {
+        formData.uploadTenderDocuments = [{
+          uid: '-1',
+          name: tenderDocumentsFileName,
+          status: 'done'
+        }];
+      } else {
+        console.log("No uploadTenderDocumentsFileName found.");
+      }
+
+      const goiOrRfpFileName = getText("uploadGOIOrRFPFileName");
+      if (goiOrRfpFileName) {
+        formData.uploadGOIOrRFP = [{
+          uid: '-1',
+          name: goiOrRfpFileName,
+          status: 'done'
+        }];
+      } else {
+        console.log("No uploadGOIOrRFPFileName found.");
+      }
+
+      const pacOrBrandPacFileName = getText("uploadPACOrBrandPACFileName");
+      if (pacOrBrandPacFileName) {
+        formData.uploadPACOrBrandPAC = [{
+          uid: '-1',
+          name: pacOrBrandPacFileName,
+          status: 'done'
+        }];
+      } else {
+        console.log("No uploadPACOrBrandPACFileName found.");
+      }
+
+      console.log("Parsed Form Data:", formData);
+      // Populate the form fields with the fetched data
       form.setFieldsValue(formData);
       setPreBidRequired(formData.preBidMeetingRequired);
       setRateContractIndent(formData.rateContractIndent);
-  
       message.success("Form data fetched successfully");
     } catch (error) {
       message.error("Failed to fetch form data");
       console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const formData = new FormData();
-  
-      // 1. Structure the complete JSON payload with ALL required fields
       const indentRequestDto = {
         indentorName: values.indentorName,
         indentorId: values.indentorId,
@@ -130,7 +191,7 @@ const Form1 = () => {
         estimatedRate: values.estimatedRate,
         periodOfRateContract: values.periodOfRateContract,
         singleOrMultipleJob: values.singleOrMultipleJob,
-        lineItems: values.lineItems.map(item => ({
+        lineItems: values.lineItems.map((item) => ({
           ...item,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
@@ -138,33 +199,20 @@ const Form1 = () => {
         }))
       };
   
-      // 2. Append as JSON blob with correct content type
-      const jsonBlob = new Blob([JSON.stringify(indentRequestDto)], {
-        type: "application/json"
-      });
-      formData.append("indentRequestDto", jsonBlob);
+      // 2. Convert the payload to a JSON string
+      const requestBody = JSON.stringify(indentRequestDto);
+      console.log("Request Body (JSON String):", requestBody); // Debug log
   
-      // 3. Append files with server-expected field names
-      const appendFile = (fieldName, fileList) => {
-        if (fileList && fileList[0]?.originFileObj) {
-          formData.append(fieldName, fileList[0].originFileObj);
-        }
-      };
-  
-      appendFile("priorApprovals", values.uploadingPriorApprovals?.fileList);
-      appendFile("tenderDocuments", values.uploadTenderDocuments?.fileList);
-      appendFile("goiOrRfp", values.uploadGOIOrRFP?.fileList);
-      appendFile("pacOrBrandPac", values.uploadPACOrBrandPAC?.fileList);
-  
-      // 4. Send request with proper headers
-      const response = await fetch("http://103.181.158.220:8081/astro-service/api/indents", {
+      // 3. Send the POST request with the JSON string and proper headers
+      const response = await fetch("/astro-service/api/indents", {
         method: "POST",
-        body: formData,
-        // Headers should NOT include Content-Type for FormData
-        // Browser will set correct boundary automatically
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: requestBody
       });
-  
-      // 5. Handle response
+        
+      // 4. Check for errors in the response
       const responseBody = await response.text();
       if (!response.ok) {
         console.error("Server response:", responseBody);
@@ -180,6 +228,7 @@ const Form1 = () => {
       setLoading(false);
     }
   };
+  
   
   const calculateTotalPrice = (record) => {
     const quantity = parseFloat(record.quantity) || 0;
@@ -219,18 +268,17 @@ const Form1 = () => {
       <Row justify="end">
         <Col>
             <Form form={form} layout="inline" style={{ marginBottom: 16 }}>
-          <Form.Item
-            label="Indent ID"
-            name="indentId"
-            rules={[{ required: true, message: "Indentor ID is required" }]}
-          >
-            <Space>
-              <Input placeholder="Enter Indent ID" />
-              <Button type="primary" onClick={handleSearch}>
-              <SearchOutlined />
-              </Button>
-            </Space>
-          </Form.Item>
+            <Form.Item
+              label="Indent ID"
+              name="indentId"
+            >
+              <Space>
+                <Input placeholder="Enter Indent ID" />
+                <Button type="primary" onClick={handleSearch}>
+                  <SearchOutlined />
+                </Button>
+              </Space>
+            </Form.Item>
             </Form>
         </Col>
       </Row>
@@ -244,7 +292,7 @@ const Form1 = () => {
           <Form.Item
             label="Indentor Name"
             name="indentorName"
-            rules={[{ required: true, message: "Indentor name is required" }]}
+            // rules={[{ required: true, message: "Indentor name is required" }]}
           >
             <Input value="Auto-populated" />
           </Form.Item>
@@ -276,11 +324,16 @@ const Form1 = () => {
             <TextArea rows={1} value="Auto-populated" />
           </Form.Item>
 
-          <Form.Item label="Upload Prior Approvals" name="uploadingPriorApprovals"  rules={[{required:true}]}>
-        <Upload beforeUpload={() => false}>
-          <Button icon={<UploadOutlined />}>Upload Prior Approvals</Button>
-        </Upload>
-      </Form.Item>
+          <Form.Item
+            label="Upload Prior Approvals"
+            name="uploadingPriorApprovals"
+            valuePropName="fileList"
+            rules={[{ required: true, message: "Prior approvals are required" }]}
+          >
+            <Upload beforeUpload={() => false}>
+              <Button icon={<UploadOutlined />}>Upload Prior Approvals</Button>
+            </Upload>
+          </Form.Item>
         </div>
 
         <div>
@@ -505,11 +558,16 @@ const Form1 = () => {
               <Option value="project2">Project 2</Option>
             </Select>
           </Form.Item>
-          <Form.Item label="Upload Tender Documents" name="uploadTenderDocuments">
-        <Upload beforeUpload={() => false}>
-          <Button icon={<UploadOutlined />}>Upload Tender Documents</Button>
-        </Upload>
-      </Form.Item>
+          <Form.Item
+            label="Upload Tender Documents"
+            name="uploadTenderDocuments"
+            valuePropName="fileList"
+            rules={[{ required: true, message: "Tender documents are required" }]}
+          >
+            <Upload beforeUpload={() => false}>
+              <Button icon={<UploadOutlined />}>Upload Tender Documents</Button>
+            </Upload>
+          </Form.Item>
         </div>
 
         <Form.Item name="preBidMeetingRequired" valuePropName="checked">
@@ -602,16 +660,29 @@ const Form1 = () => {
           )}
         </div>
         <div className="form-section">
-        <Form.Item label="Upload GOI or RFP" name="uploadGOIOrRFP" rules={[{required:true}]} >
-        <Upload beforeUpload={() => false}>
-          <Button icon={<UploadOutlined />}>Upload GOI/RFP</Button>
-        </Upload>
-      </Form.Item>
-      <Form.Item label="Upload PAC or Brand PAC" name="uploadPACOrBrandPAC"  rules={[{required:true}]}>
-        <Upload beforeUpload={() => false}>
-          <Button icon={<UploadOutlined />}>Upload PAC/Brand PAC</Button>
-        </Upload>
-      </Form.Item>
+         {/* Upload GOI/RFP */}
+         <Form.Item
+            label="Upload GOI or RFP"
+            name="uploadGOIOrRFP"
+            valuePropName="fileList"
+            rules={[{ required: true, message: "GOI or RFP is required" }]}
+          >
+            <Upload beforeUpload={() => false}>
+              <Button icon={<UploadOutlined />}>Upload GOI/RFP</Button>
+            </Upload>
+          </Form.Item>
+
+          {/* Upload PAC/Brand PAC */}
+          <Form.Item
+            label="Upload PAC or Brand PAC"
+            name="uploadPACOrBrandPAC"
+            valuePropName="fileList"
+            rules={[{ required: true, message: "PAC or Brand PAC is required" }]}
+          >
+            <Upload beforeUpload={() => false}>
+              <Button icon={<UploadOutlined />}>Upload PAC/Brand PAC</Button>
+            </Upload>
+          </Form.Item>
         </div>
 
         <Form.Item>
