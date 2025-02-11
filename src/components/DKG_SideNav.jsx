@@ -20,7 +20,8 @@ import {
   ReconciliationOutlined,
   ApartmentOutlined,
   OrderedListOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
+  DashboardOutlined
 } from "@ant-design/icons";
 import { MdOutlineAddBox } from "react-icons/md";
 import { BiTransferAlt } from "react-icons/bi";
@@ -36,6 +37,13 @@ import { icons } from "antd/es/image/PreviewGroup";
 const items = [
     {
         key: "1a",
+        icon: <DashboardOutlined />,
+        label: "Dashboard",
+        activeTab: 24,
+        path: "/",
+      },
+    {
+        key: "1b",
         icon: <UsergroupAddOutlined />,
         label: "Queue",
         activeTab: 23,
