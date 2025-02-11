@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Button,
   Checkbox,
@@ -16,67 +16,57 @@ import {
   SearchOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { Option } from "antd/es/mentions";
+
+const { Option } = Select;
 
 const Form7a = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [serviceOrders, setServiceOrders] = useState([]);
 
-  // Fetch all service orders
-  useEffect(() => {
-    const fetchServiceOrders = async () => {
-      const soId = form.getFieldValue("soID");
-      if (!soId) {
-        message.error("Please enter an SO ID");
-        return;
-      }
-      try {
-        const response = await fetch(
-          `http://103.181.158.220:8081/astro-service/api/service-orders/${soId}`
-        );
-        const data = await response.json();
-
-        if (data.responseData) {
-          setServiceOrders(data.responseData);
-        }
-      } catch (error) {
-        console.error("Error fetching service orders:", error);
-        message.error("Failed to load service orders");
-      }
-    };
-    fetchServiceOrders();
-  }, []);
-
-  // Handle tender search
-  const handleTenderSearch = async () => {
+  /**
+   * This function fetches the service order data using the provided SO ID.
+   * After fetching, it formats the data and populates the form fields.
+   */
+  const searchAndFillForm = async () => {
     setSearchLoading(true);
+    const soId = form.getFieldValue("soId");
+    if (!soId) {
+      message.error("Please enter an SO ID");
+      setSearchLoading(false);
+      return;
+    }
     try {
-      const soId = form.getFieldValue("soId");
-      if (!soId) {
-        message.warning("Please enter a SO ID");
+      const response = await fetch(`http://103.181.158.220:8081/astro-service/api/service-orders/${soId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+  
+      // Check if the backend response indicates an error
+      if (data.responseStatus && data.responseStatus.statusCode !== 200) { // Adjust status code as per your API
+        message.error(data.responseStatus.message);
+        setSearchLoading(false);
         return;
       }
-
-      const selectedOrder = serviceOrders.find((order) => order.soId === soId);
-
-      if (selectedOrder) {
+  
+      if (data.responseData) {
+        const serviceOrder = data.responseData;
         const formattedData = {
-          tenderID: selectedOrder.tenderId,
-          consigneeAddress: selectedOrder.consignesAddress,
-          billingAddress: selectedOrder.billingAddress,
-          deliveryPeriod: selectedOrder.jobCompletionPeriod,
-          ifLDClauseApplicable: selectedOrder.ifLdClauseApplicable,
-          incoTerms: selectedOrder.incoTerms,
-          paymentTerms: selectedOrder.paymentTerms,
-          vendorName: selectedOrder.vendorName,
-          vendorAddress: selectedOrder.vendorAddress,
-          applicablePBG: selectedOrder.applicablePBGToBeSubmitted,
-          vendorAccountNo: selectedOrder.vendorsAccountNo,
-          vendorIFSCCode: selectedOrder.vendorsIFSCCode,
-          vendorAccountName: selectedOrder.vendorsAccountName,
-          lineItems: selectedOrder.materials.map((item) => ({
+          tenderID: serviceOrder.tenderId,
+          consigneeAddress: serviceOrder.consignesAddress,
+          billingAddress: serviceOrder.billingAddress,
+          deliveryPeriod: serviceOrder.jobCompletionPeriod,
+          ifLDClauseApplicable: serviceOrder.ifLdClauseApplicable,
+          incoTerms: serviceOrder.incoTerms,
+          paymentTerms: serviceOrder.paymentTerms,
+          vendorName: serviceOrder.vendorName,
+          vendorAddress: serviceOrder.vendorAddress,
+          applicablePBG: serviceOrder.applicablePBGToBeSubmitted,
+          vendorAccountNo: serviceOrder.vendorsAccountNo,
+          vendorIFSCCode: serviceOrder.vendorsZRSCCode,
+          vendorAccountName: serviceOrder.vendorsAccountName,
+          lineItems: serviceOrder.materials.map((item) => ({
             materialCode: item.materialCode,
             materialDescription: item.materialDescription,
             quantity: item.quantity,
@@ -88,49 +78,46 @@ const Form7a = () => {
             budgetCode: item.budgetCode,
           })),
         };
-        form.setFieldsValue(formattedData);
-        message.success("Service order data loaded successfully");
-      } else {
-        message.error("No service order found with this Tender ID");
-      }
-    } catch (error) {
-      message.error("Error searching for service order");
-      console.error("Error:", error);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
 
+        form.setFieldsValue(formattedData);
+      message.success("Service order data loaded successfully");
+    } else {
+      message.error("No service order data found");
+    }
+  } catch (error) {
+    console.error("Error fetching service order:", error);
+    message.error(error.message || "Failed to fetch service order");
+  } finally {
+    setSearchLoading(false);
+  }
+};
+
+  // Function to handle form submission
   const submitSOData = async (values) => {
     setLoading(true);
     try {
+      // Calculate total price for each line item (if needed)
       const updatedLineItems = values.lineItems.map((item) => ({
         ...item,
         totalPrice: parseFloat(item.quantity) * parseFloat(item.unitRate),
       }));
 
       const formattedValues = {
-        responseStatus: {
-          statusCode: 0,
-          message: null,
-          errorCode: null,
-          errorType: null,
-        },
-        responseData: {
-          tenderId: values.tenderID,
-          consignesAddress: values.consigneeAddress,
-          billingAddress: values.billingAddress,
-          jobCompletionPeriod: values.deliveryPeriod,
-          ifLdClauseApplicable: values.ifLDClauseApplicable,
-          incoTerms: values.incoTerms,
-          paymentTerms: values.paymentTerms,
-          vendorName: values.vendorName,
-          vendorAddress: values.vendorAddress,
-          applicablePBGToBeSubmitted: values.applicablePBG,
-          vendorsAccountNo: values.vendorAccountNo,
-          vendorsIFSCCode: values.vendorIFSCCode,
-          vendorsAccountName: values.vendorAccountName,
-          materials: updatedLineItems.map((item) => ({
+        soId: form.getFieldValue("soId"), // Add this line
+        tenderId: values.tenderID,
+        consignesAddress: values.consigneeAddress,
+        billingAddress: values.billingAddress,
+        jobCompletionPeriod: values.deliveryPeriod,
+        ifLdClauseApplicable: values.ifLDClauseApplicable,
+        incoTerms: values.incoTerms,
+        paymentTerms: values.paymentTerms,
+        vendorName: values.vendorName,
+        vendorAddress: values.vendorAddress,
+        applicablePBGToBeSubmitted: values.applicablePBG,
+        vendorsAccountNo: values.vendorAccountNo,
+        vendorsZRSCCode: values.vendorIFSCCode,
+        vendorsAccountName: values.vendorAccountName,
+        materials: updatedLineItems.map((item) => ({
             materialCode: item.materialCode,
             materialDescription: item.materialDescription,
             quantity: parseFloat(item.quantity),
@@ -140,11 +127,11 @@ const Form7a = () => {
             gst: item.gst,
             duties: item.duties,
             budgetCode: item.budgetCode,
-          })),
-          createdBy: "admin",
-          updatedBy: "admin",
-        },
-      };
+        })),
+        createdBy: "admin",
+        updatedBy: "admin",
+    };
+    console.log("Submitting Service Order:", formattedValues);
 
       const response = await fetch(
         "http://103.181.158.220:8081/astro-service/api/service-orders",
@@ -171,8 +158,9 @@ const Form7a = () => {
   return (
     <div className="form-container">
       <h2>Service Order</h2>
-      <Row justify={"end"}>
+      <Row justify="end">
         <Col>
+          {/* This inline form is used for entering the SO ID */}
           <Form form={form} layout="inline" style={{ marginBottom: "20px" }}>
             <Form.Item
               label="SO ID"
@@ -183,7 +171,7 @@ const Form7a = () => {
                 <Input placeholder="Enter SO ID" />
                 <Button
                   type="primary"
-                  onClick={handleTenderSearch}
+                  onClick={searchAndFillForm} // call the new function here
                   loading={searchLoading}
                 >
                   <SearchOutlined />
@@ -193,6 +181,8 @@ const Form7a = () => {
           </Form>
         </Col>
       </Row>
+
+      {/* Main Form */}
       <Form form={form} layout="vertical" onFinish={submitSOData}>
         <div className="form-section">
           <Form.Item
@@ -203,39 +193,34 @@ const Form7a = () => {
             <Input placeholder="Enter Tender ID" />
           </Form.Item>
           <Form.Item label="Consignee Address" name="consigneeAddress">
-            <TextArea rows={1} placeholder="Enter consignee address" disabled />
+            <TextArea rows={1} placeholder="Enter consignee address" />
           </Form.Item>
-
           <Form.Item
             label="Billing Address"
             name="billingAddress"
-            rules={[
-              { required: true, message: "Please enter billing address" },
-            ]}
+            rules={[{ required: true, message: "Please enter billing address" }]}
           >
             <TextArea rows={1} placeholder="Enter billing address" />
           </Form.Item>
-
           <Form.Item label="Delivery Period" name="deliveryPeriod">
             <Input type="number" />
           </Form.Item>
         </div>
+
         <div>
           <Form.List name="lineItems" initialValue={[{}]}>
             {(fields, { add, remove }) => (
               <>
-                {fields.map(({ key, name, fieldKey, ...restField }) => (
+                {fields.map(({ key, name, ...restField }) => (
                   <div
                     key={key}
                     style={{
                       border: "1px solid #ccc",
                       padding: "20px",
                       marginBottom: "5px",
-                      backgroundColor: "#f9f9f9",
                     }}
                   >
                     <Space
-                      key={key}
                       style={{
                         display: "flex",
                         marginBottom: 20,
@@ -246,7 +231,8 @@ const Form7a = () => {
                       <Row gutter={16}>
                         <Col span={8}>
                           <Form.Item
-                            name="materialCode"
+                            {...restField}
+                            name={[name, "materialCode"]}
                             label="Material Code"
                             rules={[
                               {
@@ -258,47 +244,40 @@ const Form7a = () => {
                             <Input placeholder="Enter Material Code" />
                           </Form.Item>
                         </Col>
-
                         <Col span={8}>
                           <Form.Item
-                            name="materialDescription"
+                            {...restField}
+                            name={[name, "materialDescription"]}
                             label="Material Description"
                             rules={[
                               {
                                 required: true,
-                                message:
-                                  "Please select a material description!",
+                                message: "Please select a material description!",
                               },
                             ]}
                           >
                             <Input placeholder="Enter Material Description" />
                           </Form.Item>
                         </Col>
-
                         <Col span={8}>
                           <Form.Item
-                            name="quantity"
+                            {...restField}
+                            name={[name, "quantity"]}
                             label="Quantity"
                             rules={[
-                              {
-                                required: true,
-                                message: "Please enter quantity!",
-                              },
+                              { required: true, message: "Please enter quantity!" },
                             ]}
                           >
                             <Input type="number" placeholder="Enter Quantity" />
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* Unit Rate */}
                           <Form.Item
+                            {...restField}
                             label="Unit Rate"
-                            name="unitRate"
+                            name={[name, "unitRate"]}
                             rules={[
-                              {
-                                required: true,
-                                message: "Please enter the unit rate",
-                              },
+                              { required: true, message: "Please enter the unit rate" },
                             ]}
                           >
                             <Input
@@ -309,15 +288,12 @@ const Form7a = () => {
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* Currency */}
                           <Form.Item
+                            {...restField}
                             label="Currency"
-                            name="currency"
+                            name={[name, "currency"]}
                             rules={[
-                              {
-                                required: true,
-                                message: "Please select a currency",
-                              },
+                              { required: true, message: "Please select a currency" },
                             ]}
                           >
                             <Select placeholder="Select currency">
@@ -327,8 +303,11 @@ const Form7a = () => {
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* Exchange Rate */}
-                          <Form.Item label="Exchange Rate" name="exchangeRate">
+                          <Form.Item
+                            {...restField}
+                            label="Exchange Rate"
+                            name={[name, "exchangeRate"]}
+                          >
                             <Input
                               type="number"
                               step="0.01"
@@ -337,10 +316,10 @@ const Form7a = () => {
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* GST */}
                           <Form.Item
+                            {...restField}
                             label="GST (%)"
-                            name="gst"
+                            name={[name, "gst"]}
                             rules={[
                               {
                                 required: true,
@@ -356,10 +335,10 @@ const Form7a = () => {
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* Duties */}
                           <Form.Item
+                            {...restField}
                             label="Duties (%)"
-                            name="duties"
+                            name={[name, "duties"]}
                             rules={[
                               {
                                 required: true,
@@ -375,8 +354,11 @@ const Form7a = () => {
                           </Form.Item>
                         </Col>
                         <Col span={8}>
-                          {/* Budget Code */}
-                          <Form.Item label="Budget Code" name="budgetCode">
+                          <Form.Item
+                            {...restField}
+                            label="Budget Code"
+                            name={[name, "budgetCode"]}
+                          >
                             <Input placeholder="Enter Budget Code" />
                           </Form.Item>
                         </Col>
@@ -401,36 +383,18 @@ const Form7a = () => {
         </div>
 
         <div className="form-section">
-          {/* if LD clause applicable */}
-          <Form.Item
-            // label="Is LD clause applicable?"
-            name="ifLDClauseApplicable"
-          >
+          <Form.Item name="ifLDClauseApplicable" valuePropName="checked">
             <Checkbox>If LD clause applicable?</Checkbox>
           </Form.Item>
-          <Form.Item
-            label="INCO Terms"
-            name="incoTerms"
-            //   rules={[
-            //     { required: true, message: "Please specify the INCO terms" },
-            //   ]}
-          >
+          <Form.Item label="INCO Terms" name="incoTerms">
             <Input.TextArea rows={1} placeholder="Enter INCO Terms" />
           </Form.Item>
-
-          <Form.Item
-            label="Payment Terms"
-            name="paymentTerms"
-            //   rules={[
-            //     { required: true, message: "Please specify the Payment terms" },
-            //   ]}
-          >
+          <Form.Item label="Payment Terms" name="paymentTerms">
             <Input.TextArea rows={1} placeholder="Enter Payment Terms" />
           </Form.Item>
         </div>
 
         <div className="form-section">
-          {/* Vendor Name */}
           <Form.Item
             label="Vendor Name"
             name="vendorName"
@@ -438,8 +402,6 @@ const Form7a = () => {
           >
             <Input placeholder="Enter vendor name" />
           </Form.Item>
-
-          {/* Vendor Address */}
           <Form.Item
             label="Vendor Address"
             name="vendorAddress"
@@ -447,18 +409,12 @@ const Form7a = () => {
           >
             <TextArea rows={1} placeholder="Enter vendor address" />
           </Form.Item>
-
-          {/* Applicable PBG to be submitted */}
-          <Form.Item
-            label="Applicable PBG to be submitted"
-            name="applicablePBG"
-            //   rules={[{ required: true }]}
-          >
+          <Form.Item label="Applicable PBG to be submitted" name="applicablePBG">
             <TextArea rows={1} />
           </Form.Item>
         </div>
+
         <div className="form-section">
-          {/* Vendor's A/C no */}
           <Form.Item
             label="Vendor's A/C no"
             name="vendorAccountNo"
@@ -471,8 +427,6 @@ const Form7a = () => {
           >
             <Input placeholder="Enter vendor's account number" />
           </Form.Item>
-
-          {/* Vendor's IFSC Code */}
           <Form.Item
             label="Vendor's IFSC code"
             name="vendorIFSCCode"
@@ -482,8 +436,6 @@ const Form7a = () => {
           >
             <Input placeholder="Enter vendor's IFSC code" />
           </Form.Item>
-
-          {/* Vendor's A/C Name */}
           <Form.Item
             label="Vendor's A/C Name"
             name="vendorAccountName"
@@ -494,17 +446,12 @@ const Form7a = () => {
             <Input placeholder="Enter vendor's account name" />
           </Form.Item>
         </div>
-        {/* Additional Terms & Conditions */}
-        {/* <Form.Item label="Additional Terms & Conditions" name="termsConditions">
-            <Input.TextArea placeholder="Enter additional terms and conditions" />
-          </Form.Item> */}
 
-        {/* Submit Button */}
         <div className="form-section">
           <Button type="default" htmlType="reset">
             Reset
           </Button>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" loading={loading}>
             Submit
           </Button>
           <Button type="dashed" htmlType="button">
