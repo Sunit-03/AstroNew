@@ -213,6 +213,8 @@ const Form7 = () => {
           vendorsIfscCode: values.vendorIFSCCode,
           vendorAccountName: values.vendorAccountName,
           purchaseOrderAttributes: updatedLineItems,
+          createdBy: "adminu",
+          updatedBy: "admin",
       };
       console.log("Submitting PO:", formattedValues);
 
