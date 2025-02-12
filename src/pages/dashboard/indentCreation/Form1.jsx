@@ -135,7 +135,7 @@ const Form1 = () => {
         indentId: values.indentId,
         indentorMobileNo: values.indentorMobileNo,
         indentorEmailAddress: values.indentorEmail,
-        consignesLocation: values.consigneeLocation,
+        consignesLocation: values.consigneeLocation || '',
         
         uploadingPriorApprovalsFileName: values.uploadingPriorApprovals?.[0]?.name || '',
         uploadTenderDocumentsFileName: values.uploadTenderDocuments?.[0]?.name || '',
