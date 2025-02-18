@@ -4,8 +4,11 @@ import { MinusCircleOutlined, PlusOutlined, UploadOutlined, SearchOutlined } fro
 import { Option } from "antd/es/mentions";
 import TextArea from "antd/es/input/TextArea";
 import dayjs from "dayjs";
+import { useSelector } from "react-redux";
 
 const Form1 = () => {
+  const auth = useSelector((state) => state.auth);
+  const actionPerformer = auth.userId;  
   const [form] = Form.useForm();
   const [preBidRequired, setPreBidRequired] = useState(false);
   const [rateContractIndent, setRateContractIndent] = useState(false);
@@ -51,7 +54,7 @@ const Form1 = () => {
         preBidMeetingRequired: responseData.isPreBidMeetingRequired || false,
         preBidMeetingDetails: responseData.preBidMeetingDate
           ? [dayjs(responseData.preBidMeetingDate, "DD/MM/YYYY")]
-          : undefined,
+          : null,
         preBidMeetingLocation: responseData.preBidMeetingVenue || "",
         rateContractIndent: responseData.isItARateContractIndent || false,
         estimatedRate: parseFloat(responseData.estimatedRate) || 0,
@@ -135,18 +138,18 @@ const Form1 = () => {
         indentId: values.indentId,
         indentorMobileNo: values.indentorMobileNo,
         indentorEmailAddress: values.indentorEmail,
-        consignesLocation: values.consigneeLocation || '',
+        consignesLocation: values.consigneeLocation || 'Banglore' || null,
         
         uploadingPriorApprovalsFileName: values.uploadingPriorApprovals?.[0]?.name || '',
         uploadTenderDocumentsFileName: values.uploadTenderDocuments?.[0]?.name || '',
         uploadGOIOrRFPFileName: values.uploadGOIOrRFP?.[0]?.name || '',
         uploadPACOrBrandPACFileName: values.uploadPACOrBrandPAC?.[0]?.name || '',
         
-        projectName: values.projectName || '',
+        projectName: values.projectName || null,
         isPreBidMeetingRequired: !!values.preBidMeetingRequired,
         preBidMeetingDate: values.preBidMeetingRequired && values.preBidMeetingDetails
         ? dayjs(values.preBidMeetingDetails[0]).format('DD/MM/YYYY')
-        : "N/A",  
+        : null,  
 
         preBidMeetingVenue: values.preBidMeetingLocation || '',
         
@@ -160,8 +163,8 @@ const Form1 = () => {
         
         materialDetails: materialDetails,
         
-        createdBy: "adminu",
-        updatedBy: "admin"
+        createdBy: actionPerformer,
+        updatedBy: null,
       };
   
       // Ensure payload is a proper JSON object

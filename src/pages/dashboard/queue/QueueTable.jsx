@@ -4,7 +4,6 @@ import {
   Input,
   Button,
   Space,
-  Select,
   Typography,
   Popover,
   Form,
@@ -17,11 +16,14 @@ import {
 } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import axios from "axios";
-import { Option } from "antd/es/mentions";
+import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 
 const QueueTable = () => {
+  // Get the logged-in user's role details from Redux
+  const auth = useSelector((state) => state.auth);
+  const actionPerformer = auth.userId;
   const [data, setData] = useState([]);
   const [transitions, setTransitions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,10 +32,8 @@ const QueueTable = () => {
   const [requestChangeComment, setRequestChangeComment] = useState("");
   const [additionalInfoComment, setAdditionalInfoComment] = useState("");
   const [indentData, setIndentData] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false); // Indent details modal
-
-  // Persistent role selection dropdown at the top left.
-  const [selectedRole, setSelectedRole] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // --- 1. Fetch workflow transitions dynamically on mount ---
   useEffect(() => {
@@ -51,13 +51,28 @@ const QueueTable = () => {
     fetchTransitions();
   }, []);
 
-  // --- 2. Extract unique roles from transitions using nextRoleName ---
-  const getUniqueRoles = () => {
-    const roles = transitions.map((item) => item.nextRoleName);
-    return [...new Set(roles)];
-  };
+  // --- 2. Fetch the current user details from the UserMaster API ---
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get(
+          "http://103.181.158.220:8081/astro-service/api/userMaster"
+        );
+        const userData = response.data.responseData;
+        if (userData && userData.length > 0) {
+          setCurrentUserId(userData[0].userId);
+        } else {
+          message.error("No user data found.");
+        }
+      } catch (error) {
+        message.error("Failed to fetch user details.");
+        console.error("User fetch error:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
-  // --- 3. Fetch queue data based on the selected role ---
+  // --- 3. Fetch queue data based on the logged-in user's role ---
   const fetchData = async (roleName) => {
     if (!roleName) return;
     setLoading(true);
@@ -68,11 +83,10 @@ const QueueTable = () => {
         )}`
       );
       const apiData = response.data.responseData;
-      // Preserve the original request ID along with other properties.
       const formattedData = apiData.map((item, index) => ({
         key: index.toString(),
         requestId: item.requestId,
-        originalRequestId: item.requestId, // Preserve original ID (e.g., "IND13")
+        originalRequestId: item.requestId,
         workflowId: item.workflowId,
         workflowName: item.workflowName,
         status: item.nextAction,
@@ -88,80 +102,111 @@ const QueueTable = () => {
     }
   };
 
-  // --- 4. Handle role change from the persistent dropdown ---
-  const handleRoleChange = (value) => {
-    setSelectedRole(value);
-    fetchData(value);
-  };
+  // When the logged-in role information is available, fetch queue data
+  useEffect(() => {
+    if (auth && auth.role) {
+      fetchData(auth.role);
+    }
+  }, [auth.role]);
 
-  const FilterComponent = ({ onFilter }) => {
-    const [form] = Form.useForm();
-    const handleReset = () => {
-      form.resetFields();
-      onFilter({});
-    };
-    return (
-      <Form form={form} onFinish={onFilter}>
-        <Row gutter={16} align="middle">
-          <Col span={6}>
-            <Form.Item name="requestId" style={{ marginBottom: 10 }}>
-              <Input placeholder="Request ID" />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item name="workflowId" style={{ marginBottom: 10 }}>
-              <Input placeholder="Workflow ID" />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Form.Item name="workflowName" style={{ marginBottom: 10 }}>
-              <Input placeholder="Workflow Name" />
-            </Form.Item>
-          </Col>
-          <Col span={6}>
-            <Space style={{ marginBottom: 10 }}>
-              <Button type="primary" icon={<SearchOutlined />} htmlType="submit">
-                Search
-              </Button>
-              <Button onClick={handleReset}>Reset</Button>
-            </Space>
-          </Col>
-        </Row>
-      </Form>
-    );
-  };
-
-  // --- 5. Action Handlers ---
-
-  // Approve: Call nextTransition endpoint and remove the record from the current queue.
-  const handleApprove = async (record) => {
+  // --- Helper function: Fetch workflowTransitionId for a given indent (requestId) ---
+  const fetchWorkflowTransitionId = async (requestId) => {
     try {
-      // Use the preserved originalRequestId if available.
-      const requestIdToUse = record.originalRequestId || record.requestId;
-      const url = `http://103.181.158.220:8081/astro-service/nextTransition?workflowId=1&workflowName=indent%20workflow&currentRole=${encodeURIComponent(
-        selectedRole
-      )}&requestId=${encodeURIComponent(requestIdToUse)}`;
-      const transitionResponse = await axios.get(url);
-      // Assuming the backend returns the next role name in response.data.nextRoleName.
-      const nextRole = transitionResponse.data.nextRoleName || "the next role";
-      message.success(`Request ${requestIdToUse} approved and moved to ${nextRole}.`);
-      // Remove the approved record from current role's queue.
-      setData((prevData) => prevData.filter((item) => item.key !== record.key));
+      const response = await axios.get(
+        `http://103.181.158.220:8081/astro-service/workflowTransitionHistory?requestId=${requestId}`
+      );
+      const data = response.data.responseData;
+      if (Array.isArray(data) && data.length > 0) {
+        return data[0].workflowTransitionId;
+      }
+      return null;
     } catch (error) {
-      message.error("Failed to approve the request.");
+      console.error("Error fetching workflowTransitionId:", error);
+      return null;
+    }
+  };
+
+  const handleApprove = async (record) => {
+    if (!currentUserId) {
+      message.error("User details not loaded yet.");
+      return;
+    }
+    try {
+      const workflowTransitionId = await fetchWorkflowTransitionId(
+        record.requestId
+      );
+      if (!workflowTransitionId) {
+        message.error("Workflow transition ID not found for this indent.");
+        return;
+      }
+
+      const payload = {
+        action: "APPROVED",
+        actionBy: actionPerformer,
+        assignmentRole: null,
+        remarks: "Approved successfully",
+        requestId: record.requestId,
+        workflowTransitionId,
+      };
+
+      await axios.post(
+        "http://103.181.158.220:8081/astro-service/performTransitionAction",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      message.success(`Indent ${record.requestId} approved successfully.`);
+      setData((prevData) =>
+        prevData.filter((item) => item.key !== record.key)
+      );
+    } catch (error) {
+      message.error("Failed to approve the indent.");
       console.error("Approval error:", error);
     }
   };
 
-  const handleReject = (record) => {
-    const updatedData = data.map((item) =>
-      item.key === record.key
-        ? { ...item, status: "Rejected", remarks: `Reject Comments: ${rejectComment}` }
-        : item
-    );
-    setData(updatedData);
-    setRejectComment("");
-    message.success("Reject comments added.");
+  const handleReject = async (record) => {
+    if (!rejectComment.trim()) {
+      message.warning("Please enter a reject comment.");
+      return;
+    }
+    if (!currentUserId) {
+      message.error("User details not loaded yet.");
+      return;
+    }
+    try {
+      const workflowTransitionId = await fetchWorkflowTransitionId(
+        record.requestId
+      );
+      if (!workflowTransitionId) {
+        message.error("Workflow transition ID not found for this indent.");
+        return;
+      }
+
+      const payload = {
+        action: "REJECTED",
+        actionBy: actionPerformer,
+        assignmentRole: null,
+        remarks: rejectComment,
+        requestId: record.requestId,
+        workflowTransitionId,
+      };
+
+      await axios.post(
+        "http://103.181.158.220:8081/astro-service/performTransitionAction",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      message.success(`Indent ${record.requestId} rejected successfully.`);
+      setData((prevData) =>
+        prevData.filter((item) => item.key !== record.key)
+      );
+      setRejectComment("");
+    } catch (error) {
+      message.error("Failed to reject the indent.");
+      console.error("Rejection error:", error);
+    }
   };
 
   const handleRequestChangeSubmit = (record) => {
@@ -186,7 +231,7 @@ const QueueTable = () => {
     message.success("Additional info comments added.");
   };
 
-  // --- 6. Fetch indent details when a Request ID is clicked ---
+  // --- Fetch indent details when a Request ID is clicked ---
   const fetchIndentDetails = async (requestId) => {
     if (!requestId) {
       message.error("No indent ID found.");
@@ -206,6 +251,13 @@ const QueueTable = () => {
       setLoading(false);
     }
   };
+
+//   const handleRemoveIndent = (record) => {
+//     setData((prevData) =>
+//       prevData.filter((item) => item.key !== record.key)
+//     );
+//     message.success(`Indent ${record.requestId} removed from the queue.`);
+//   };
 
   const columns = [
     {
@@ -254,7 +306,7 @@ const QueueTable = () => {
       render: (_, record) => {
         if (record.status === "Approved") return null;
         return (
-          <Space>
+          <Space wrap>
             <Button type="link" onClick={() => handleApprove(record)}>
               Approve
             </Button>
@@ -290,7 +342,9 @@ const QueueTable = () => {
                     placeholder="Request Change Comments"
                     rows={3}
                     value={requestChangeComment}
-                    onChange={(e) => setRequestChangeComment(e.target.value)}
+                    onChange={(e) =>
+                      setRequestChangeComment(e.target.value)
+                    }
                   />
                   <Button
                     type="primary"
@@ -306,32 +360,73 @@ const QueueTable = () => {
             >
               <Button type="link">Request Change</Button>
             </Popover>
+            {/* <Button
+              type="link"
+              danger
+              onClick={() => handleRemoveIndent(record)}
+            >
+              Remove
+            </Button> */}
           </Space>
         );
       },
     },
   ];
 
+  // --- Filter Component remains unchanged ---
+  const FilterComponent = ({ onFilter }) => {
+    const [form] = Form.useForm();
+    const handleReset = () => {
+      form.resetFields();
+      onFilter({});
+    };
+    return (
+      <Form form={form} onFinish={onFilter}>
+        <Row gutter={16} align="middle">
+          <Col span={6}>
+            <Form.Item name="requestId" style={{ marginBottom: 10 }}>
+              <Input placeholder="Request ID" />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="workflowId" style={{ marginBottom: 10 }}>
+              <Input placeholder="Workflow ID" />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="workflowName" style={{ marginBottom: 10 }}>
+              <Input placeholder="Workflow Name" />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Space style={{ marginBottom: 10 }}>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                htmlType="submit"
+              >
+                Search
+              </Button>
+              <Button onClick={handleReset}>Reset</Button>
+            </Space>
+          </Col>
+        </Row>
+      </Form>
+    );
+  };
+
   return (
     <div style={{ padding: 24 }}>
-      {/* Persistent Role Selection at Top Left */}
+      {/* Display the logged-in user's role details */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col>
-          <Text strong>Select Role:</Text>
+          <Text strong>Role ID:</Text> {auth.roleId || "N/A"}
         </Col>
         <Col>
-          <Select
-            placeholder="Select a role"
-            style={{ width: 200 }}
-            value={selectedRole || undefined}
-            onChange={handleRoleChange}
-          >
-            {getUniqueRoles().map((role) => (
-              <Option key={role} value={role}>
-                {role}
-              </Option>
-            ))}
-          </Select>
+          <Text strong>Role Name:</Text> {auth.role || "N/A"}
+        </Col>
+        <Col>
+          <Text strong>User ID:</Text> {actionPerformer}
         </Col>
       </Row>
 
@@ -372,7 +467,8 @@ const QueueTable = () => {
             </p>
             <p>
               <strong>Estimated Rate:</strong> ₹
-              {indentData.estimatedRate && indentData.estimatedRate.toFixed(2)}
+              {indentData.estimatedRate &&
+                indentData.estimatedRate.toFixed(2)}
             </p>
             <p>
               <strong>Total Price of Materials:</strong> ₹
@@ -396,9 +492,21 @@ const QueueTable = () => {
               pagination={false}
               bordered
               columns={[
-                { title: "Material Code", dataIndex: "materialCode", key: "materialCode" },
-                { title: "Description", dataIndex: "materialDescription", key: "materialDescription" },
-                { title: "Quantity", dataIndex: "quantity", key: "quantity" },
+                {
+                  title: "Material Code",
+                  dataIndex: "materialCode",
+                  key: "materialCode",
+                },
+                {
+                  title: "Description",
+                  dataIndex: "materialDescription",
+                  key: "materialDescription",
+                },
+                {
+                  title: "Quantity",
+                  dataIndex: "quantity",
+                  key: "quantity",
+                },
                 {
                   title: "Unit Price",
                   dataIndex: "unitPrice",
@@ -407,12 +515,16 @@ const QueueTable = () => {
                 },
                 {
                   title: "Total Price",
-                  dataIndex: "totalPrize",
-                  key: "totalPrize",
+                  dataIndex: "totalPrice",
+                  key: "totalPrice",
                   render: (text) => `₹${text.toFixed(2)}`,
                 },
                 { title: "UOM", dataIndex: "uom", key: "uom" },
-                { title: "Budget Code", dataIndex: "budgetCode", key: "budgetCode" },
+                {
+                  title: "Budget Code",
+                  dataIndex: "budgetCode",
+                  key: "budgetCode",
+                },
               ]}
             />
           </div>

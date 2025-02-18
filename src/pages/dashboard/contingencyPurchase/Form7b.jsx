@@ -107,9 +107,9 @@ const Form7b = () => {
           throw new Error(`File too large: uploadInvoice`);
         }
         // Convert the file to a Base64 string.
-        const fileBase64 = await toBase64(file);
-        // Set the Base64 string in the payload using the key the backend expects.
-        formattedValues.uploadCopyOfInvoice = fileBase64;
+        // const fileBase64 = await toBase64(file);
+        // // Set the Base64 string in the payload using the key the backend expects.
+        // formattedValues.uploadCopyOfInvoice = fileBase64;
       }
   
       // Convert the full payload (including the file data) to a JSON string.
